@@ -40,7 +40,7 @@
    if(!/^[A-Z0-9][A-Z0-9.\-]{0,17}$/.test(asset)){invalid++;continue}
    if(wanted&&asset!==wanted){filtered++;continue}
    const dateValue=String(row[date]||'').slice(0,10);
-   if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)||new Date(dateValue+'T00:00:00Z').toISOString().slice(0,10)!==dateValue){invalid++;continue}
+   const parsedDate=Date.parse(dateValue+'T00:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)||!FIN(parsedDate)||new Date(parsedDate).toISOString().slice(0,10)!==dateValue){invalid++;continue}
    const vals=[o,hi,lo,c].map(i=>Number(String(row[i]||'').replace(/\s/g,'')));
    const volume=v<0?null:Number(String(row[v]||'').trim());
    if(vals.some(x=>!FIN(x)||x<=0)||!FIN(volume)&&v>=0||volume!==null&&volume<0){invalid++;continue}
