@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1422">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'none'">
+<title>QuantSwing AI — Laboratoire historique</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1422;--panel:#132237;--border:#294057;--text:#eef5fc;--muted:#a2b4c6;--good:#61dfb0;--bad:#ff8c99;--accent:#76a9ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+main{max-width:1120px;margin:auto;padding:22px 16px 70px}a{color:var(--accent)}.top{display:flex;gap:15px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:24px;margin:12px 0 0}h2{font-size:18px;margin:0 0 12px}p{margin:8px 0 12px}.muted{color:var(--muted)}.small{font-size:12px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:18px;margin-top:16px}.control{display:flex;gap:14px;align-items:end;flex-wrap:wrap}label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+input[type=file],select,button{color:var(--text);font:inherit}input[type=file]{max-width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;background:#0b1827}
+button{padding:10px 16px;background:#1c5970;border:1px solid #367e91;border-radius:10px;cursor:pointer;font-weight:650}
+button:disabled{opacity:.45;cursor:not-allowed} .alert{padding:12px;border:1px solid #796747;background:#30291b;border-radius:10px;color:#ffe6b8;margin-top:12px}
+.good{color:var(--good)}.bad{color:var(--bad)}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.card{padding:12px;border-radius:10px;background:#1a2d45}.big{font-size:24px;font-weight:750}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px;font-size:13px}th,td{border-bottom:1px solid var(--border);padding:9px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+thead{color:#b7cce0}.hidden{display:none}.pill{background:#1c3a50;padding:5px 10px;border-radius:30px;font-size:12px}.status{font-size:13px}.note{font-size:12px;color:var(--muted)}.flex{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.ticker{font-weight:750}
+@media(max-width:730px){.cards{grid-template-columns:repeat(2,1fr)}.big{font-size:21px}h1{font-size:21px}.panel{padding:13px}}
+</style>
+</head>
+<body><main>
+<div class="top"><div><a href="./">← Portefeuille QuantSwing AI</a><h1>Laboratoire de backtesting historique</h1><p class="muted">Swing trading 3 à 10 séances · NYSE, NASDAQ, TSX · analyse locale sur ton iPad</p></div><span class="pill">0 $ · Aucun ordre réel</span></div>
+<div class="panel"><h2>1. Importer les chandeliers historiques</h2><p>Choisis un ou plusieurs fichiers CSV contenant au minimum <strong>Date, Open, High, Low, Close, Volume</strong>. Chaque fichier correspond à une action. Les données sont lues uniquement dans ton navigateur et ne sont envoyées à aucun serveur par cette page.</p>
+<div class="control"><div><label for="files">Fichiers OHLCV (.csv)</label><input id="files" type="file" accept=".csv,text/csv" multiple></div><div><label for="split">Période finale réservée au test</label><select id="split"><option value="0.3">30 % des dernières séances</option><option value="0.25">25 % des dernières séances</option><option value="0.4">40 % des dernières séances</option></select></div><button id="run" disabled>Tester les stratégies</button></div>
+<div class="alert">Les résultats sont expérimentaux. Nous utilisons des règles fixes, sans IA prédictive entraînée. Les cours historiques peuvent présenter des erreurs, des ajustements de fractionnement ou des biais de sélection. Ce test ne prouve pas une rentabilité future.</div>
+<p id="status" class="status muted" aria-live="polite">Aucun fichier importé.</p></div>
+<div id="report" class="hidden">
+<div class="panel"><h2>2. Résultats hors échantillon — période « Test »</h2><p class="muted small">Nous réservons la fin de chaque série à l'évaluation. Ce pourcentage est le taux de transactions profitables, <strong>pas</strong> une probabilité garantie pour le prochain signal.</p>
+<div class="cards"><div class="card"><div class="small muted">Transactions test</div><div id="testCount" class="big">—</div></div><div class="card"><div class="small muted">Taux gagnant</div><div id="testWin" class="big">—</div></div><div class="card"><div class="small muted">Rendement moyen net / trade</div><div id="testAvg" class="big">—</div></div><div class="card"><div class="small muted">Profit factor</div><div id="testPF" class="big">—</div></div></div>
+<p id="testWarnings" class="alert"></p>
+<div class="table-wrap"><table><thead><tr><th>Stratégie</th><th>Échantillon</th><th>Transactions</th><th>Gagnants</th><th>Moyenne nette</th><th>Profit factor</th></tr></thead><tbody id="statsBody"></tbody></table></div></div>
+<div class="panel"><h2>3. Épreuves par action</h2><p class="muted small">La période Test commence à une date différente si les fichiers n'ont pas la même durée. Un même marché peut donc influencer plusieurs résultats.</p>
+<div class="table-wrap"><table><thead><tr><th>Symbole</th><th>Stratégie</th><th>Début test</th><th>Nombre test</th><th>Taux gagnant</th><th>Moyenne nette</th></tr></thead><tbody id="byTicker"></tbody></table></div></div>
+<div class="panel"><h2>4. Quelques transactions historiques de test</h2><div class="table-wrap"><table><thead><tr><th>Action</th><th>Stratégie</th><th>Signal</th><th>Achat simulé</th><th>Sortie</th><th>Cause</th><th>Rendement net</th></tr></thead><tbody id="trades"></tbody></table></div></div>
+<div class="panel"><h2>5. Signaux détectés à la dernière clôture importée</h2><div id="latest"></div><p class="note">Il s'agit de signaux historiques de démonstration calculés au dernier jour de chaque fichier, pas de recommandations actuelles. Le prix d'entrée réel à l'ouverture suivante demeure inconnu.</p></div>
+<div class="panel"><h2>Règles de la simulation</h2><p class="small muted">Signal à la clôture t, entrée au cours d'ouverture de t+1; un seul trade simultané par titre et par stratégie. Si stop et objectif sont atteints le même jour, la simulation retient le stop (hypothèse prudente). Gap sous le stop : sortie au prix d'ouverture. Sortie temporelle au plus tard à 7 séances (modérée) ou 5 séances (agressive). Frais + glissement forfaitaires hypothétiques : 0,15 % à l'achat et 0,15 % à la vente. Les dividendes, la conversion CAD/USD, la liquidité réelle et la construction du portefeuille ne sont pas modélisés. Les tests sont par transaction, pas un rendement de portefeuille. Les stratégies fixes devront encore être validées en simulation prospective et sur des titres délistés pour limiter le biais de survivance.</p></div>
+</div>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const pct=x=>Number.isFinite(x)?(x*100).toFixed(2).replace('.',',')+' %':'—';
+const num=x=>Number.isFinite(x)?x.toFixed(2).replace('.',','):'—';
+const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=x=>String(x).padStart(2,'0');
+let loaded=[],lastResults=[];
+function rowsCSV(input){let rows=[],row=[],v='',quoted=false;input=String(input).replace(/^\uFEFF/,'');for(let i=0;i<input.length;i++){const x=input[i];if(x==='"'){if(quoted&&input[i+1]==='"'){v+='"';i++}else quoted=!quoted}else if(x===','&&!quoted){row.push(v.trim());v=''}else if((x==='\n'||x==='\r')&&!quoted){if(x==='\r'&&input[i+1]==='\n')i++;row.push(v.trim());if(row.some(z=>z!==''))rows.push(row);row=[];v=''}else{v+=x}}row.push(v.trim());if(row.some(z=>z!==''))rows.push(row);return rows}
+function parseFile(name,content){
+ const rows=rowsCSV(content);if(rows.length<100)throw Error('Moins de 99 séances : historique insuffisant');
+ const h=rows.shift().map(x=>x.toLowerCase().replace(/[^a-z]/g,''));
+ const cols=['date','open','high','low','close','volume'].map(k=>h.indexOf(k));
+ if(cols.some(k=>k<0))throw Error('Colonnes nécessaires : Date, Open, High, Low, Close, Volume');
+ const map=new Map();
+ for(const r of rows){const date=r[cols[0]].trim().slice(0,10);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
+ const n=cols.slice(1).map(i=>Number(String(r[i]||'').replace(/,/g,'')));
+ if(n.some(z=>!Number.isFinite(z))||n.slice(0,4).some(z=>z<=0)||n[4]<0)continue;
+ const [o,hi,lo,c,v]=n;if(hi<lo||o>hi*1.001||o<lo*.999||c>hi*1.001||c<lo*.999)continue;
+ map.set(date,{date,o,hi,lo,c,v});
+ }
+ const bars=[...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
+ if(bars.length<99)throw Error('Moins de 99 séances valides après nettoyage');
+ const symbol=name.replace(/\.csv$/i,'').replace(/[^a-zA-Z0-9.\-]/g,'').toUpperCase();
+ if(!/^[A-Z0-9][A-Z0-9.\-]{0,17}$/.test(symbol))throw Error('Nom de fichier à remplacer par le symbole boursier (ex. SHOP.TO.csv)');
+ return {symbol,bars};
+}
+function sma(b,i,n,key){if(i<n-1)return null;let s=0;for(let j=i-n+1;j<=i;j++)s+=b[j][key];return s/n}
+function rsi(b,i,n=14){if(i<n)return null;let up=0,down=0;for(let j=i-n+1;j<=i;j++){const d=b[j].c-b[j-1].c;if(d>0)up+=d;else down-=d}return down===0?100:100-100/(1+up/down)}
+function atr(b,i,n=14){if(i<n)return null;let total=0;for(let j=i-n+1;j<=i;j++){const x=b[j],pc=b[j-1].c;total+=Math.max(x.hi-x.lo,Math.abs(x.hi-pc),Math.abs(x.lo-pc))}return total/n}
+function features(b,i){if(i<60)return null;const a=atr(b,i),r=rsi(b,i),ma20=sma(b,i,20,'c'),ma50=sma(b,i,50,'c'),vol=sma(b,i-1,20,'v');let max=-Infinity;for(let j=i-20;j<i;j++)max=Math.max(max,b[j].hi);return {a,r,ma20,ma50,rv:vol>0?b[i].v/vol:0,max}}
+const STRAT=[
+ {key:'Modérée',hold:7,stop:1.5,target:2.5,accept:(x,f)=>x.c>f.max&&f.ma20>f.ma50&&x.c>f.ma20&&f.r>=48&&f.r<=78&&f.rv>=1.1},
+ {key:'Agressive',hold:5,stop:2,target:4,accept:(x,f)=>x.c>f.max*1.005&&f.rv>=1.7&&f.a/x.c>=.025&&f.r>55&&f.r<85}
+];
+function simulate(one,strategy,split){
+ const b=one.bars,n=b.length,cut=Math.floor(n*(1-split)),out=[],recent=[];
+ for(let i=60;i<n-1;){
+  const f=features(b,i),s=!!f&&strategy.accept(b[i],f);if(i===n-2&&s)recent.push(b[i].date);
+  if(!s){i++;continue}
+  const entry=b[i+1].o,stop=entry-strategy.stop*f.a,target=entry+strategy.target*f.a;
+  if(stop<=0||!Number.isFinite(entry)){i++;continue}
+  const last=Math.min(n-1,i+strategy.hold),actualFull=i+strategy.hold<n;
+  if(!actualFull){i++;continue} // no partial-horizon backtests
+  let exit=null,why='',endIndex=null;
+  for(let j=i+1;j<=last;j++){
+   const x=b[j];
+   if(x.o<=stop){exit=x.o;why='Gap/stop';endIndex=j;break}
+   if(x.lo<=stop){exit=stop;why='Stop';endIndex=j;break}
+   if(x.hi>=target){exit=target;why='Objectif';endIndex=j;break}
+   if(j===last){exit=x.c;why='Durée';endIndex=j}
+  }
+  if(exit!==null){
+   const net=exit/entry*(1-0.0015)/(1+0.0015)-1;
+   out.push({symbol:one.symbol,strategy:strategy.key,signal:b[i].date,entryDate:b[i+1].date,exitDate:b[endIndex].date,entry,exit,why,ret:net,sample:i>=cut?'Test':'Développement',cut:b[cut].date});
+   i=endIndex+1; // do not overlap trades of the same strategy and ticker
+  }else i++;
+ }
+ const ix=n-1,latest=features(b,ix);const now=latest&&strategy.accept(b[ix],latest);
+ return {out,latest:now?{symbol:one.symbol,strategy:strategy.key,date:b[ix].date,close:b[ix].c,atr:latest.a}:null,cut:b[cut].date};
+}
+function metrics(t){const x=t.map(v=>v.ret),g=x.filter(v=>v>0),l=x.filter(v=>v<0),sum=a=>a.reduce((s,v)=>s+v,0),gp=sum(g),lp=-sum(l);return {n:x.length,w:x.length?g.length/x.length:null,avg:x.length?sum(x)/x.length:null,pf:lp>0?gp/lp:gp>0?Infinity:null}}
+function pretty(m){return {n:m.n,w:m.n?pct(m.w):'—',avg:m.n?pct(m.avg):'—',pf:m.pf===null?'—':m.pf===Infinity?'∞':num(m.pf)}}
+function statsRow(name,sample,m){const f=pretty(m);return '<tr><td>'+safe(name)+'</td><td>'+safe(sample)+'</td><td>'+f.n+'</td><td>'+f.w+'</td><td class="'+(m.avg>=0?'good':'bad')+'">'+f.avg+'</td><td>'+f.pf+'</td></tr>'}
+function draw(all,latest,details){
+ $('report').classList.remove('hidden');const test=all.filter(x=>x.sample==='Test'),m=metrics(test),p=pretty(m);
+ $('testCount').textContent=p.n;$('testWin').textContent=p.w;$('testAvg').textContent=p.avg;$('testPF').textContent=p.pf;
+ $('testWarnings').textContent=m.n<30?'Échantillon de test trop petit ('+m.n+' transactions). Ne pas utiliser ce pourcentage comme prévision.':'Résultats historiques uniquement : vérifier par période, secteur et régime de marché. Pas de probabilité future garantie.';
+ $('statsBody').innerHTML=STRAT.map(s=>['Développement','Test'].map(sample=>statsRow(s.key,sample,metrics(all.filter(x=>x.strategy===s.key&&x.sample===sample)))).join('')).join('');
+ $('byTicker').innerHTML=details.map(d=>{const m=metrics(all.filter(x=>x.symbol===d.symbol&&x.strategy===d.strategy&&x.sample==='Test')),p=pretty(m);return '<tr><td class="ticker">'+safe(d.symbol)+'</td><td>'+safe(d.strategy)+'</td><td>'+safe(d.cut)+'</td><td>'+p.n+'</td><td>'+p.w+'</td><td>'+p.avg+'</td></tr>'}).join('');
+ $('trades').innerHTML=test.slice(-40).reverse().map(t=>'<tr><td class="ticker">'+safe(t.symbol)+'</td><td>'+safe(t.strategy)+'</td><td>'+t.signal+'</td><td>'+t.entryDate+'</td><td>'+t.exitDate+'</td><td>'+safe(t.why)+'</td><td class="'+(t.ret>=0?'good':'bad')+'">'+pct(t.ret)+'</td></tr>').join('')||'<tr><td colspan="7">Aucune transaction de test</td></tr>';
+ $('latest').innerHTML=latest.length?'<div class="flex">'+latest.map(t=>'<span class="pill">'+safe(t.symbol)+' · '+safe(t.strategy)+' · '+safe(t.date)+' · clôture '+num(t.close)+'</span>').join('')+'</div>':'<p class="muted">Aucun signal à la dernière clôture des fichiers importés.</p>';
+}
+$('files').addEventListener('change',async e=>{
+ loaded=[];$('run').disabled=true;$('report').classList.add('hidden');
+ const files=[...e.target.files];if(!files.length){$('status').textContent='Aucun fichier importé.';return}
+ if(files.length>50){$('status').textContent='Limite : 50 fichiers à la fois.';return}
+ const errors=[];
+ for(const f of files){try{if(f.size>5e6)throw Error('Fichier supérieur à 5 Mo');loaded.push(parseFile(f.name,await f.text()))}catch(err){errors.push(f.name+' : '+err.message)}}
+ $('run').disabled=!loaded.length;
+ $('status').textContent=loaded.length+' série(s) prête(s) : '+loaded.map(v=>v.symbol+' ('+v.bars.length+' séances)').join(', ')+(errors.length?' · Problèmes : '+errors.join(' ; '):'');
+});
+$('run').addEventListener('click',()=>{
+ try{const split=Number($('split').value);const all=[],latest=[],details=[];
+ for(const item of loaded)for(const s of STRAT){const r=simulate(item,s,split);all.push(...r.out);if(r.latest)latest.push(r.latest);details.push({symbol:item.symbol,strategy:s.key,cut:r.cut})}
+ all.sort((a,b)=>a.entryDate.localeCompare(b.entryDate));
+ lastResults=all;draw(all,latest,details);$('status').textContent='Analyse terminée : '+loaded.length+' action(s), '+all.length+' transactions historiques simulées. Aucune donnée envoyée sur Internet.';
+ }catch(e){$('status').textContent='Impossible de terminer le test : '+e.message}
+});
+</script>
+</body></html>
