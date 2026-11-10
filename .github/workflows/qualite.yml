@@ -1,0 +1,20 @@
+name: QuantSwing - Tests de fiabilite
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code
+        uses: actions/checkout@v4
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests automatiques sans dependances
+        run: node --test tests/quant.test.cjs
