@@ -117,7 +117,7 @@ function simulatedInput(symbol,days=130){
 async function command(){
  const outArg=process.argv.indexOf('--output'),destination=outArg>=0?process.argv[outArg+1]:null;
  if(!destination)throw Error('Provide --output path');
- const demo=process.argv.includes('--demo'),now=demo?new Date('2026-06-01T22:35:00.000Z'):new Date();
+ const demo=process.argv.includes('--demo'),now=demo?new Date('2026-05-11T22:35:00.000Z'):new Date();
  const fakeFetch=async()=>({ok:true,json:async()=>simulatedInput('DEMO')});
  const report=demo?await scan({now,tickers:['DEMO'],apiKey:'DEMO_ONLY',fetchImpl:fakeFetch,publicationAllowed:true}):
   await scan({now,apiKey:process.env.ALPHAVANTAGE_API_KEY||'',publicationAllowed:process.env.PUBLICATION_RIGHTS_CONFIRMED==='true'});
