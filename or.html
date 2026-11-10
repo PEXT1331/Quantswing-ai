@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr-CA"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1422"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';connect-src 'none';img-src 'self' data:;font-src 'self';object-src 'none';frame-src 'none';base-uri 'none';form-action 'none'">
+<meta name="description" content="QuantSwing AI — laboratoire de validation de stratégies sur l'or et GLD, résultats non prédictifs, fichiers privés.">
+<title>QuantSwing AI · Laboratoire de l'or</title>
+<style>
+:root{color-scheme:dark;--bg:#081421;--surface:#14243a;--raised:#1d324a;--line:#304a62;--fg:#f2f7ff;--muted:#b0c2d5;--gold:#ffd28d;--mint:#64d5b0;--red:#ff9cae;--blue:#87b8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#223a51 0%,#0d1b2c 45%,var(--bg) 83%);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1160px;margin:auto;padding:19px 17px 90px}
+a{color:var(--blue)}button,input,select{font:inherit}button{cursor:pointer;min-height:43px;border:1px solid #478075;color:#eaffef;background:#215b50;border-radius:10px;padding:10px 15px;font-weight:730}button.secondary{border-color:#46627d;background:#253a52;color:var(--fg)}
+input,select{width:100%;min-height:45px;padding:11px;background:#091725;border:1px solid #3a566d;color:var(--fg);border-radius:11px;font-size:16px}
+button:focus-visible,input:focus,select:focus,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.nav{display:flex;gap:13px;flex-wrap:wrap;align-items:center;font-size:13px;margin-bottom:17px}.hero{padding:24px;border:1px solid #766349;border-radius:20px;background:linear-gradient(130deg,#493b2c,#18283b 65%)}.kicker{font-size:12px;letter-spacing:.08em;color:var(--gold);font-weight:800;text-transform:uppercase}h1{margin:8px 0 10px;font-size:clamp(25px,4vw,38px);line-height:1.15}h2{font-size:19px;margin:0 0 10px}h3{font-size:15px;margin:8px 0}.small{font-size:12px}.muted{color:var(--muted)}.panel{border:1px solid var(--line);border-radius:17px;background:var(--surface);padding:19px;margin:15px 0}.info{background:#1d37483d;border-left:3px solid var(--blue);padding:12px 14px;border-radius:9px;margin:12px 0}.warning{background:#3a2c24;border:1px solid #957449;color:#ffe3bb;padding:12px;border-radius:11px;margin:12px 0}.pass{background:#183b33;border:1px solid #408c75;color:#c8fbe5;padding:12px;border-radius:11px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.metric{background:var(--raised);border:1px solid #345069;padding:13px;border-radius:13px}.metric span{color:var(--muted);font-size:12px;display:block}.metric strong{display:block;font-size:clamp(20px,3vw,29px);line-height:1.3;margin-top:5px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:space-between}.control{margin-bottom:10px}.good{color:var(--mint)}.bad{color:var(--red)}.gold{color:var(--gold)}.hidden{display:none!important}
+canvas{display:block;width:100%;height:280px;background:#0b192a;border:1px solid #355067;border-radius:12px}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:11px 0}.dot{display:inline-block;width:10px;height:10px;border-radius:99px;margin-right:6px}.tablewrap{overflow-x:auto}table{min-width:750px;width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #30445a;padding:10px 8px;text-align:left;font-size:13px}th{color:var(--muted);font-size:12px}th:last-child,td:last-child{text-align:right}.footer{text-align:center;color:var(--muted);font-size:11px;padding-top:30px}
+.pill{display:inline-block;border:1px solid #826b46;border-radius:30px;padding:4px 9px;background:#342b20;color:#ffe1b0;font-size:11px;font-weight:800}
+@media(max-width:720px){main{padding:13px 12px 80px}.panel{padding:14px}.hero{padding:19px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}canvas{height:240px}}
+</style></head><body><main>
+<nav class="nav" aria-label="Navigation"><a href="./">← Mon portefeuille</a><a href="risque.html">Stops et risques</a><a href="analyse.html">Ancien laboratoire</a><a href="audit.html">Audit des stratégies actions</a></nav>
+<header class="hero"><span class="kicker">QuantSwing AI · Recherche expérimentale</span><h1>L'or : vérifier les résultats avant de croire les prédictions.</h1>
+<p>Compare deux stratégies fixes — cassure de tendance et rebond après correction — face à un achat-conservation, avec les mêmes dates et les mêmes hypothèses de frais. Aucun ordre boursier n'est exécuté.</p>
+<span class="pill">0 $ de logiciel · Pas de TradingView requis</span></header>
+<div class="warning"><strong>État réel du projet :</strong> aucune donnée boursière en direct n'est intégrée. Aucune stratégie n'est validée comme rentable. Les simulations n'indiquent pas quand acheter aujourd'hui. Un historique de l'or « GOLD » n'est pas identique aux prix du FNB GLD.</div>
+<section class="panel"><h2>01 · Importer un historique</h2><p class="muted">Importe un fichier CSV quotidien de ton choix, avec <code>Date, Open, High, Low, Close</code>; <code>Volume</code> est facultatif. Une colonne <code>Asset</code> ou <code>Symbol</code> permet de distinguer les instruments. Aucun fichier n'est envoyé sur Internet ni conservé dans le dépôt.</p>
+<div class="grid">
+ <div><label for="historicalCsv">Chandeliers CSV (max. 8 Mo)</label><input id="historicalCsv" type="file" accept=".csv,text/csv" aria-describedby="fileHelp"/><p id="fileHelp" class="small muted">Les fichiers .xlsx doivent être convertis en CSV OHLCV avec ton logiciel de tableur. Les seules clôtures/NAV ne suffisent pas à simuler nos stops intrajournaliers.</p></div>
+ <div><label for="specificSymbol">Symbole à sélectionner (facultatif)</label><input id="specificSymbol" placeholder="GLD, GOLD ou CGL.C" maxlength="18" autocomplete="off"/><p class="small muted">Obligatoire si le CSV contient plusieurs instruments. Ne confonds jamais le cours spot de l'or et celui du FNB acheté.</p></div>
+</div>
+<div class="row" style="margin-top:12px"><button id="runDemo" type="button" class="secondary">Essayer des données fictives</button><span class="small muted">Les démos ne prouvent aucune rentabilité.</span></div>
+<p id="dataStatus" class="info" role="status" aria-live="polite">Aucun historique importé : aucun résultat ni signal n'est calculé.</p>
+<h3>Sources à consulter pour tes recherches personnelles</h3>
+<p class="small muted"><a href="https://www.spdrgoldshares.com/usa/gld/" target="_blank" rel="noopener noreferrer">Émetteur officiel GLD — informations et archive XLSX</a> · <a href="https://www.alphavantage.co/documentation/#daily" target="_blank" rel="noopener noreferrer">Alpha Vantage — OHLCV quotidien avec clé gratuite, 100 dernières séances</a> · <a href="https://github.com/tohaitrieu/market-history/blob/master/data/commodities/GOLD/GOLD-D1.csv" target="_blank" rel="noopener noreferrer">Archive GOLD D1 externe, 2001–2026 (source primaire non vérifiée)</a>.</p>
+<p class="small muted"><strong>Attention :</strong> le dépôt GOLD annonce une utilisation libre mais ne documente pas son fournisseur initial; il s'agit donc uniquement d'un jeu exploratoire. L'archive officielle GLD peut ne pas contenir les cinq champs OHLCV. Nous ne republions aucune série tierce.</p>
+</section>
+<section class="panel"><h2>02 · Paramètres fixés avant de regarder les résultats</h2>
+<div class="grid">
+ <div class="control"><label for="feePct">Frais + glissement par transaction (entrée et sortie séparément)</label><select id="feePct"><option value=".0015" selected>0,15 % par côté</option><option value=".003">0,30 % par côté</option><option value=".005">0,50 % par côté</option></select></div>
+ <div class="control"><label for="testSplit">Part chronologique réservée au test</label><select id="testSplit"><option value=".2">20 % finales</option><option value=".3" selected>30 % finales</option><option value=".4">40 % finales</option></select></div>
+</div>
+<p class="small muted">Pour rendre la comparaison raisonnable, les stratégies et la référence « or 10 % + liquidités 90 % » mobilisent <strong>10 % du portefeuille</strong> à chaque achat. Les 90 % de liquidités ne rapportent aucun intérêt. La référence 100 % exposée est aussi présentée pour contexte. Aucun rééquilibrage, impôt ou conversion USD/CAD n'est simulé.</p>
+<div class="grid">
+ <div class="info"><strong>Stratégie A — Cassure</strong><p class="small">Clôture au-dessus du High des 20 jours précédents, MA20 supérieure à MA50, RSI entre 50 et 80. Entrée à l'ouverture suivante, stop 1,5 ATR, cible 3 ATR, horizon 10 séances.</p></div>
+ <div class="info"><strong>Stratégie B — Correction</strong><p class="small">Clôture sous MA20 − 0,75 ATR, RSI ≤ 38, cours au-dessus de MA200. Entrée à l'ouverture suivante, stop 2 ATR, cible 2,5 ATR, horizon 10 séances.</p></div>
+</div>
+<p class="small muted">Si le stop et la cible sont touchés le même jour, le stop est exécuté en premier. En cas d'ouverture sous le stop, la sortie est simulée à l'ouverture, pas au prix souhaité du stop. Les opérations sont sans chevauchement par stratégie; les 200 premières séances servent au calcul des indicateurs.</p>
+</section>
+<section id="result" class="panel hidden">
+<div class="row"><h2>03 · Résultats chronologiques — validation exploratoire</h2><button type="button" id="exportReport" class="secondary">Exporter le résumé (.json)</button></div>
+<div id="quality" class="warning" role="status"></div>
+<div class="grid metrics">
+ <div class="metric"><span>Instrument déclaré</span><strong id="ticker">—</strong></div>
+ <div class="metric"><span>Chandeliers valides</span><strong id="barN">—</strong></div>
+ <div class="metric"><span>Dernière séance</span><strong id="lastDate">—</strong></div>
+ <div class="metric"><span>Période de test</span><strong id="testDates">—</strong></div>
+</div>
+<div id="latest" class="info"></div>
+<div id="notEnough" class="warning hidden"></div>
+<div id="studyResults" class="hidden">
+<h3>Performance du portefeuille sur la période de test</h3>
+<div class="tablewrap"><table><thead><tr><th>Approche</th><th>Trades</th><th>Gagnants</th><th>Profit factor</th><th>Rendement net portefeuille</th><th>Repli max simulé</th><th>Temps exposé</th></tr></thead><tbody id="strategyRows"></tbody></table></div>
+<p class="small muted">Le profit factor et le taux gagnant sont mesurés sur les transactions clôturées, pas sur une probabilité de réussite future. Le repli maximum est calculé sur les valorisations de fin de séance et peut sous-estimer un risque intrajournalier réel. Les fonds inutilisés demeurent en liquidités sans intérêt.</p>
+<div class="row" style="margin-top:18px"><h3>Courbe simulée — valeur d'un capital de départ de 1</h3><span class="small muted">Historique de test seulement</span></div>
+<canvas id="goldChart" role="img" aria-label="Courbes simulées des deux stratégies et de l'achat-conservation"></canvas>
+<div class="legend"><span><i class="dot" style="background:#ffd28d"></i>Or conservé à 10 %</span><span><i class="dot" style="background:#66d9b6"></i>Cassure</span><span><i class="dot" style="background:#85b5ff"></i>Correction</span></div>
+<h3 style="margin-top:20px">Dernières transactions théoriques (tests)</h3>
+<div class="tablewrap"><table><thead><tr><th>Stratégie</th><th>Signal</th><th>Entrée</th><th>Sortie</th><th>Motif</th><th>Gain/perte net sur la position</th></tr></thead><tbody id="tradeRows"></tbody></table></div>
+</div></section>
+<footer>QuantSwing AI · Laboratoire de l'or v1 · Aucun prix automatique · Résultats historiques ≠ revenus futurs</footer>
+</main>
+<script src="scripts/gold-engine.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),engine=window.QuantGold;
+let dataset=null,report=null,demo=false,sourceName='';
+const pct=v=>Number.isFinite(v)?v.toFixed(2).replace('.',',')+' %':'—';
+const num=v=>Number.isFinite(v)?new Intl.NumberFormat('fr-CA',{maximumFractionDigits:2}).format(v):'—';
+const asOf=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+function txt(tag,value,css){const e=document.createElement(tag);e.textContent=String(value);if(css)e.className=css;return e}
+function appendCells(row,vals){for(const [value,cls] of vals)row.append(txt('td',value,cls))}
+function setNotice(id,content,ok=false){const e=$(id);e.className=ok?'pass':'warning';e.textContent=content}
+function drawChart(series){
+ const canvas=$('goldChart'),rect=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+ const w=Math.max(360,rect.width||720),h=Math.max(220,rect.height||280);
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ const ctx=canvas.getContext('2d');if(!ctx)return;ctx.scale(dpr,dpr);
+ const curves=series.map(x=>x.curve),values=curves.flatMap(c=>c.map(x=>x.equity));
+ const min=Math.min(...values),max=Math.max(...values),range=Math.max(.01,max-min),padding={l:57,r:13,t:18,b:32};
+ const x=index=>padding.l+index/(Math.max(1,curves[0].length-1))*(w-padding.l-padding.r);
+ const y=value=>padding.t+(max-value)/range*(h-padding.t-padding.b);
+ ctx.font='12px -apple-system, sans-serif';ctx.strokeStyle='#314c63';ctx.fillStyle='#aabfd4';ctx.textAlign='right';
+ for(let i=0;i<=4;i++){const v=min+i*range/4,yp=y(v);ctx.beginPath();ctx.moveTo(padding.l,yp);ctx.lineTo(w-padding.r,yp);ctx.stroke();ctx.fillText(v.toFixed(2),padding.l-7,yp+4)}
+ const palette=['#ffd28d','#66d9b6','#85b5ff'];
+ curves.forEach((curve,j)=>{ctx.beginPath();ctx.lineWidth=2;ctx.strokeStyle=palette[j];curve.forEach((p,i)=>{const px=x(i),py=y(p.equity);if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py)});ctx.stroke()});
+ ctx.textAlign='left';ctx.fillStyle='#aabfd4';ctx.fillText(curves[0][0].date,padding.l,h-10);ctx.textAlign='right';ctx.fillText(curves[0][curves[0].length-1].date,w-padding.r,h-10);
+}
+function render(){
+ if(!dataset)return;
+ const current=asOf(),last=dataset.last,age=Math.round((Date.parse(current+'T12:00:00Z')-Date.parse(last+'T12:00:00Z'))/86400000);
+ const warnings=[];
+ if(demo)warnings.push('MODE FICTIF : toutes les chandelles sont artificielles. Ces résultats ne prouvent absolument rien.');
+ else warnings.push('Source et droits de l’historique non audités : résultats expérimentaux uniquement.');
+ if(dataset.ticker!=='GLD')warnings.push('Ce jeu concerne '+dataset.ticker+', pas le FNB GLD négocié en Bourse : coûts, heures et exécution potentiellement différents.');
+ if(!dataset.hasVolume)warnings.push('Aucun volume disponible; les deux règles testées n’utilisent pas le volume.');
+ if(dataset.jumps)warnings.push(dataset.jumps+' grands écarts (>40 %) observés : vérifier la continuité/ajustement de la série.');
+ if(dataset.invalid||dataset.duplicates)warnings.push(dataset.invalid+' lignes rejetées et '+dataset.duplicates+' dates dupliquées.');
+ if(dataset.partial)warnings.push(dataset.partial+' bougie(s) future(s) ou incomplète(s) exclue(s) avant analyse.');
+ if(age>7)warnings.push('Données périmées de '+age+' jours : aucun signal d’achat actuel ne peut en être tiré.');
+ if(age<0)warnings.push('Dernière date dans le futur : vérifie les dates avant toute conclusion.');
+ $('result').classList.remove('hidden');setNotice('quality',warnings.join(' • '));
+ $('ticker').textContent=dataset.ticker;$('barN').textContent=num(dataset.bars.length);$('lastDate').textContent=dataset.last;
+ report=engine.study(dataset,{fee:Number($('feePct').value),allocation:.1,split:Number($('testSplit').value)});
+ const m=report.latest;
+ $('latest').textContent=m?'Dernière bougie importée : clôture '+num(m.close)+' · MA20 '+num(m.ma20)+' · MA50 '+num(m.ma50)+' · MA200 '+num(m.ma200)+' · ATR14 '+num(m.atr)+' · RSI14 '+num(m.rsi)+' · Signal technique rétrospectif : '+(report.latestSignals.some(x=>x.active)?report.latestSignals.filter(x=>x.active).map(x=>x.name).join(', '):'aucun')+'. Ceci ne confirme aucune opportunité actuelle.':'Au moins 201 bougies sont nécessaires pour calculer les indicateurs complets.';
+ if(report.status!=='ok'){
+  $('testDates').textContent='Insuffisant';$('studyResults').classList.add('hidden');
+  $('notEnough').classList.remove('hidden');$('notEnough').textContent='Au moins 260 bougies sont requises pour le backtest. Série importée : '+dataset.bars.length+'. Les 100 dernières bougies gratuites d’une API suffisent éventuellement pour certains indicateurs, mais pas pour une validation sérieuse.';
+  return;
+ }
+ $('notEnough').classList.add('hidden');$('studyResults').classList.remove('hidden');$('testDates').textContent=report.firstTestDate+' → '+report.lastTestDate;
+ const rows=$('strategyRows');rows.replaceChildren();
+ for(const s of report.strategies){
+  const tr=txt('tr');appendCells(tr,[[s.name,''],[s.trades,''],[pct(s.winRatePct),''],[s.profitFactor===null?'—':num(s.profitFactor),''],[pct(s.portfolioReturnPct),s.portfolioReturnPct>=0?'good':'bad'],[pct(s.maxDrawdownPct),''],[pct(s.exposurePct),'']]);rows.append(tr);
+ }
+ for(const [title,b,exposure] of [['Acheter et conserver · 10 % or',report.benchmarks.matched,'100 % des séances à 10 %'],['Acheter et conserver · 100 % or',report.benchmarks.full,'100 % des séances à 100 %']]){
+  const tr=txt('tr');appendCells(tr,[[title,''],['1',''],['—',''],['—',''],[pct(b.returnPct),b.returnPct>=0?'good':'bad'],[pct(b.maxDDPct),''],[exposure,'']]);rows.append(tr);
+ }
+ const all=report.strategies.flatMap(x=>x.entries.map(t=>({...t,model:x.name}))).sort((a,b)=>b.entryDate.localeCompare(a.entryDate)).slice(0,24);
+ const tbody=$('tradeRows');tbody.replaceChildren();
+ if(!all.length){const tr=txt('tr'),cell=txt('td','Aucune transaction terminée dans la période de test.');cell.colSpan=6;tr.append(cell);tbody.append(tr)}
+ for(const t of all){const tr=txt('tr');appendCells(tr,[[t.model,''],[t.signalDate,''],[t.entryDate+' · '+num(t.entry),''],[t.exitDate+' · '+num(t.exit),''],[t.reason,''],[pct(t.returnPct),t.returnPct>=0?'good':'bad']]);tbody.append(tr)}
+ requestAnimationFrame(()=>drawChart([{curve:report.benchmarks.matched.curve},...report.strategies.map(s=>({curve:s.curve}))]));
+}
+function importFile(file){
+ if(!file)return;
+ if(file.size>8e6){setNotice('dataStatus','Fichier trop volumineux : 8 Mo maximum.');return}
+ file.text().then(text=>{
+  const parsed=engine.parseOHLCV(text,{filename:file.name,symbol:$('specificSymbol').value});
+  dataset=parsed;demo=false;sourceName=file.name;
+  setNotice('dataStatus','Import local réussi : '+parsed.ticker+' · '+parsed.bars.length+' séances de '+parsed.first+' à '+parsed.last+'. Aucun téléchargement vers un serveur.',true);render();
+ }).catch(err=>{setNotice('dataStatus','Import refusé : '+(err.message||'CSV invalide'));dataset=null;$('result').classList.add('hidden')});
+}
+$('historicalCsv').addEventListener('change',e=>{importFile(e.target.files&&e.target.files[0]);e.target.value=''});
+for(const id of ['feePct','testSplit'])$(id).addEventListener('change',render);
+$('runDemo').addEventListener('click',()=>{
+ let p=120;const lines=['Date,Open,High,Low,Close,Volume'];
+ for(let i=0;i<1100;i++){
+  const dt=new Date(Date.UTC(2018,0,1+i));const date=dt.toISOString().slice(0,10);
+  const o=p,c=p*(1+.0015+Math.sin(i*.17)*.012+(i%31===5?-.02:0));
+  lines.push([date,o.toFixed(4),(Math.max(o,c)*1.012).toFixed(4),(Math.min(o,c)*.988).toFixed(4),c.toFixed(4),100000+i%700].join(','));p=c;
+ }
+ dataset=engine.parseOHLCV(lines.join('\n'),{filename:'DEMO.csv'});demo=true;sourceName='Simulation fictive générée localement';
+ setNotice('dataStatus','MODE FICTIF : '+dataset.bars.length+' bougies artificielles générées dans ton navigateur. Ne jamais considérer ces résultats comme réels.');render();
+});
+$('exportReport').addEventListener('click',()=>{
+ if(!dataset||!report)return;
+ const stripped=report.status==='ok'?{instrument:dataset.ticker,first:dataset.first,last:dataset.last,hasVolume:dataset.hasVolume,sourceName,syntheticDemo:demo,limitations:'Données non vérifiées, comparaisons historiques non prédictives, coûts de conversion et impôts exclus.',settings:report.settings,firstTestDate:report.firstTestDate,lastTestDate:report.lastTestDate,strategies:report.strategies.map(({curve,entries,...rest})=>rest),benchmarks:{matched:{returnPct:report.benchmarks.matched.returnPct,maxDDPct:report.benchmarks.matched.maxDDPct},full:{returnPct:report.benchmarks.full.returnPct,maxDDPct:report.benchmarks.full.maxDDPct}}}:{instrument:dataset.ticker,status:'Historique insuffisant',bars:dataset.bars.length};
+ const content=JSON.stringify({product:'QuantSwing AI · Or',generatedAt:new Date().toISOString(),study:stripped},null,2);
+ const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='QuantSwing_or_etude_'+(dataset.last||'local')+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+window.addEventListener('resize',()=>{if(report?.status==='ok')requestAnimationFrame(()=>drawChart([{curve:report.benchmarks.matched.curve},...report.strategies.map(s=>({curve:s.curve}))]))});
+</script></body></html>
