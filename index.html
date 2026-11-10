@@ -146,7 +146,23 @@ $('backtestFile').addEventListener('change',async e=>{const f=e.target.files?.[0
 $('clearTests').addEventListener('click',()=>{if(!confirm('Effacer les résultats de backtest importés ?'))return;data.backtests=[];data.backtestImportedAt=null;save();render();flash('Backtests effacés.')});
 function download(text,name,type){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500)}
 $('exportBackup').addEventListener('click',()=>download(JSON.stringify({product:'QuantSwing AI',exportDate:stamp(),data},null,2),'QuantSwing_sauvegarde_'+ymd()+'.json','application/json'));
-$('importBackup').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>5e6)throw Error('Sauvegarde trop volumineuse.');const j=JSON.parse(await f.text());const d=j.data;if(j.product!=='QuantSwing AI'||d?.version!==1||!Array.isArray(d.trades)||!Array.isArray(d.cash)||typeof d.quotes!=='object')throw Error('Fichier de sauvegarde incompatible.');if(!confirm('Remplacer toutes les données de cet appareil par cette sauvegarde ?'))return;data={...blank(),...d};save();render();flash('Sauvegarde restaurée.')}catch(err){flash(err.message||'Restauration impossible.',true)}finally{e.target.value=''}});
+
+function verifyImportedBackup(d){
+ const dateOK=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
+ const pos=x=>typeof x==='number'&&Number.isFinite(x)&&x>0;
+ const nonneg=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0;
+ const symOK=x=>typeof x==='string'&&validSym(x);
+ const idOK=x=>typeof x==='string'&&x.length>0&&x.length<250;
+ if(!d||!Array.isArray(d.trades)||!Array.isArray(d.cash)||!d.quotes||typeof d.quotes!=='object'||Array.isArray(d.quotes))throw Error('Structure de sauvegarde incorrecte.');
+ if(d.trades.length>10000||d.cash.length>10000||Object.keys(d.quotes).length>1000)throw Error('Sauvegarde trop volumineuse pour cet iPad.');
+ if(!d.trades.every(t=>t&&idOK(t.id)&&dateOK(t.date)&&symOK(t.symbol)&&['CAD','USD'].includes(t.currency)&&['buy','sell'].includes(t.side)&&pos(t.qty)&&pos(t.price)&&pos(t.fx)&&nonneg(t.fee)))throw Error('Une transaction contient des champs invalides.');
+ if(!d.cash.every(x=>x&&idOK(x.id)&&dateOK(x.date)&&['deposit','withdraw'].includes(x.side)&&pos(x.amount)))throw Error('Un dépôt ou retrait contient des données invalides.');
+ if(!Object.entries(d.quotes).every(([s,q])=>symOK(s)&&q&&pos(q.price)&&typeof q.updatedAt==='string'&&!Number.isNaN(Date.parse(q.updatedAt))))throw Error('Les cours contenus dans la sauvegarde sont invalides.');
+ if(d.fx!==null&&d.fx!==undefined&&(!pos(d.fx.rate)||typeof d.fx.updatedAt!=='string'||Number.isNaN(Date.parse(d.fx.updatedAt))))throw Error('Le taux de change est invalide.');
+ if(d.backtests!==undefined&&(!Array.isArray(d.backtests)||d.backtests.length>50000||!d.backtests.every(t=>t&&typeof t.strategy==='string'&&typeof t.sample==='string'&&typeof t.return==='number'&&Number.isFinite(t.return))))throw Error('Les statistiques sauvegardées sont invalides.');
+}
+
+$('importBackup').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>5e6)throw Error('Sauvegarde trop volumineuse.');const j=JSON.parse(await f.text());const d=j.data;if(j.product!=='QuantSwing AI'||d?.version!==1||!Array.isArray(d.trades)||!Array.isArray(d.cash)||typeof d.quotes!=='object')throw Error('Fichier de sauvegarde incompatible.');verifyImportedBackup(d);if(!confirm('Remplacer toutes les données de cet appareil par cette sauvegarde ?'))return;data={...blank(),...d};save();render();flash('Sauvegarde restaurée.')}catch(err){flash(err.message||'Restauration impossible.',true)}finally{e.target.value=''}});
 $('resetAll').addEventListener('click',()=>{if(!confirm('Effacer toutes les données sur cet appareil ? Vérifie ta sauvegarde avant.'))return; if(!confirm('Deuxième confirmation : cette action est irréversible sans sauvegarde.'))return;data=blank();save();render();flash('Données locales effacées.')});
 $('date').value=ymd();$('cashDate').value=ymd();render();
 
