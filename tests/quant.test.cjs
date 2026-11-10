@@ -78,7 +78,7 @@ test('A same-day stop and target uses the stop: conservative candle ordering',()
 });
 test('Opening gap below stop exits at opening price, not imaginary stop fill',()=>{
  const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:3,stop:1,target:1,go:b=>b.date===day};
- bars[81]={...bars[81],o:90,hi:93,lo:85,c:90};
+ bars[82]={...bars[82],o:90,hi:93,lo:85,c:90}; // gap AFTER purchase at 81; initial stop was based on entry 100
  const x=h.testOne({ticker:'STRESS',bars},model,.3);const trade=x.out.find(t=>t.signal===day);
  assert.ok(trade);assert.equal(trade.why,'Gap / stop');assert.equal(trade.exit,90);assert.ok(trade.returnNet<-.08);
 });
@@ -98,7 +98,7 @@ test('Never claim trading accuracy from a completely flat market',()=>{
  for(const strategy of h.strategies)assert.equal(h.testOne({ticker:'FLAT',bars},strategy,.3).out.length,0);
 });
 test('Simulated returns include both legs of transaction costs',()=>{
- const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:2,stop:50,target:50,go:b=>b.date===day};
+ const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:2,stop:20,target:20,go:b=>b.date===day}; // keep stop > 0 (100 - 20*2)
  const x=h.testOne({ticker:'STRESS',bars},model,.3);
  const trade=x.out[0];assert.ok(trade);assert.equal(trade.why,'Durée');
  assert.ok(Math.abs(trade.returnNet-((1-.0015)/(1+.0015)-1))<1e-10);
