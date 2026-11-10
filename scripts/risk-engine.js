@@ -92,7 +92,7 @@
   if(target!==null&&(target-entry)/loss<1.5)warnings.push('Gain/risque inférieur à 1,5:1 avant frais.');
   return {valid:true,stop:round(selected,6),support:round(usableSupport,6),atrStop:round(usableVol,6),target:round(target,6),trailing:round(trailing,6),riskPerShare:round(loss,6),rewardRisk:target!==null?round((target-entry)/loss,3):null,warnings};
  }
- function positionPlan(state,{symbol,currency,entry,stop,target,riskPct=.5,maxTickerPct=10,maxTotalRiskPct=2,feePct=.15,sectorExposureCAD=null,sectorLimitPct=25}){
+ function positionPlan(state,{symbol,currency,entry,stop,target,riskPct=.5,maxTickerPct=10,maxTotalRiskPct=2,feePct=.15,sectorExposureCAD=null,sectorLimitPct=25,marketAsOf=null}){
   const reasons=[],warnings=[];
   const s=cleanSymbol(symbol);if(!VALID.test(s))reasons.push('Symbole invalide');
   if(!['CAD','USD'].includes(currency))reasons.push('Devise invalide');
@@ -103,6 +103,7 @@
   if(!finite(maxTotalRiskPct)||maxTotalRiskPct<=0||maxTotalRiskPct>10)reasons.push('Plafond de risque cumulé invalide');
   if(!finite(feePct)||feePct<0||feePct>3)reasons.push('Frais simulés invalides');
   if(sectorExposureCAD!==null&&(!nonnegative(sectorExposureCAD)||!finite(sectorLimitPct)||sectorLimitPct<=0||sectorLimitPct>100))reasons.push('Exposition du secteur invalide');
+  if(marketAsOf!==null){const date=Date.parse(String(marketAsOf)+'T12:00:00Z');const age=Date.now()-date;if(!Number.isFinite(date)||age>7*86400000||age < -86400000)reasons.push('Chandeliers importés périmés ou datés dans le futur : nouvelles données nécessaires.');}
   if(!state||state.valid!==true)reasons.push(...(state?.issues||['Portefeuille indisponible']));
   if(reasons.length)return {eligible:false,quantity:0,reasons:[...new Set(reasons)],warnings,hardStop:true};
   const fx=currency==='CAD'?1:state.fx;
@@ -139,5 +140,65 @@
   warnings.push('Cours et taux saisis localement, frais et conversions estimés, aucune cotation automatique.');
   return {eligible:reasons.length===0,quantity:reasons.length?0:qty,preliminaryQuantity:qty,caps,limitingFactors:Object.entries(caps).filter(([,v])=>v===qty).map(([k])=>k),riskBudgetCAD:round(budget),positionCostCAD:round(cost),lossToStopCAD:round(newRisk),totalRiskToStopsCAD:round(totalRisk),remainingRiskCAD:round(remainingRisk),riskUnitCAD:round(riskUnit),rewardRiskNet:round(ratio,3),existingTickerValueCAD:round(held?.value||0),fx,returnsAtTargetCAD:round(qty*rewardUnit),reasons,warnings,hardStop:false};
  }
- return {snapshot,technicalLevels,positionPlan,cleanSymbol,isRecent};
+
+ function csvRows(source){
+  let rows=[],line=[],value='',inQuotes=false;
+  source=String(source).replace(/^\uFEFF/,'');
+  for(let i=0;i<source.length;i++){
+   const ch=source[i];
+   if(ch==='"'){if(inQuotes&&source[i+1]==='"'){value+='"';i++}else inQuotes=!inQuotes}
+   else if(ch===','&&!inQuotes){line.push(value.trim());value=''}
+   else if((ch==='\n'||ch==='\r')&&!inQuotes){if(ch==='\r'&&source[i+1]==='\n')i++;line.push(value.trim());if(line.some(x=>x!==''))rows.push(line);line=[];value=''}
+   else value+=ch;
+  }
+  line.push(value.trim());if(line.some(x=>x!==''))rows.push(line);
+  return rows;
+ }
+ function levelsFromCSV({csv,ticker='',filename='',now=new Date()}){
+  if(typeof csv!=='string'||csv.length>6e6)throw Error('CSV absent ou trop volumineux (6 Mo maximum)');
+  const rows=csvRows(csv);if(rows.length<31||rows.length>25000)throw Error('Il faut au moins 30 chandeliers OHLCV et 25 000 lignes au maximum.');
+  const header=rows.shift().map(h=>h.toLowerCase().replace(/[^a-z]/g,''));
+  const idx=k=>header.indexOf(k);
+  const dateIndex=['date','datetime','timestamp'].map(idx).find(i=>i>=0)??-1;
+  const open=idx('open'),high=idx('high'),low=idx('low'),close=idx('close'),volume=idx('volume');
+  const symbolIndex=['symbol','ticker'].map(idx).find(i=>i>=0)??-1;
+  if([dateIndex,open,high,low,close,volume].some(i=>i<0))throw Error('Colonnes Date, Open, High, Low, Close, Volume nécessaires.');
+  const requested=cleanSymbol(ticker),fallback=cleanSymbol(filename.replace(/\.csv$/i,''));
+  const tickerName=VALID.test(requested)?requested:VALID.test(fallback)?fallback:'';
+  const found=new Map();
+  const localNow=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+  const nowTimestamp=Date.parse(localNow+'T12:00:00Z');
+  const localHour=Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',hour:'2-digit',hourCycle:'h23'}).format(now));
+  for(const r of rows){
+   const symbol=symbolIndex>=0?cleanSymbol(r[symbolIndex]):tickerName;
+   if(!VALID.test(symbol)||tickerName&&symbol!==tickerName)continue;
+   const d=String(r[dateIndex]||'').slice(0,10);
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||Number.isNaN(Date.parse(d))||d>localNow||d===localNow&&localHour<19)continue;
+   const vals=[open,high,low,close,volume].map(i=>Number(String(r[i]||'').trim()));
+   const [o,hi,lo,c,v]=vals;
+   if(vals.some(z=>!finite(z))||Math.min(o,hi,lo,c)<=0||v<0||hi<Math.max(o,c)||lo>Math.min(o,c))continue;
+   if(!found.has(symbol))found.set(symbol,[]);
+   found.get(symbol).push({date:d,o,hi,lo,c,v});
+  }
+  if(!found.size)throw Error('Aucune ligne valide pour ce symbole. Vérifie le nom et les dates.');
+  // Pour un CSV multi-actions sans symbole saisi, afficher seulement le premier titre.
+  const [symbol,unsorted]=found.entries().next().value;
+  const map=new Map(unsorted.map(b=>[b.date,b]));
+  const bars=[...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  if(bars.length<61)throw Error('Au moins 61 séances valides nécessaires pour calculer les niveaux.');
+  const i=bars.length-1,last=bars[i];
+  let atr=0,lo10=Infinity,hi60=-Infinity,hi20=-Infinity,vol20=0;
+  for(let j=i-13;j<=i;j++){
+   const b=bars[j],prev=bars[j-1].c;
+   atr+=Math.max(b.hi-b.lo,Math.abs(b.hi-prev),Math.abs(b.lo-prev));
+  }
+  atr/=14;
+  for(let j=i-9;j<=i;j++)lo10=Math.min(lo10,bars[j].lo);
+  for(let j=i-60;j<i;j++)hi60=Math.max(hi60,bars[j].hi);
+  for(let j=i-20;j<i;j++){hi20=Math.max(hi20,bars[j].hi);vol20+=bars[j].v}
+  const days=Math.round((nowTimestamp-Date.parse(last.date+'T12:00:00Z'))/86400000);
+  return {symbol,date:last.date,entry:round(last.c,6),atr:round(atr,6),swingLow:round(lo10,6),resistanceHigh:hi60>last.c?round(hi60,6):null,breakoutHigh20:round(hi20,6),relativeVolume:vol20>0?round(last.v/(vol20/20),3):null,daysOld:days,stale:days>7,barCount:bars.length};
+ }
+
+ return {snapshot,technicalLevels,positionPlan,cleanSymbol,isRecent,levelsFromCSV};
 });
