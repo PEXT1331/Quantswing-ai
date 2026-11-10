@@ -1,0 +1,60 @@
+name: QuantSwing - Radar quotidien sous licence
+on:
+  pull_request:
+    paths:
+      - 'scripts/radar.cjs'
+      - 'tests/radar.test.cjs'
+      - '.github/workflows/radar.yml'
+      - 'radar.html'
+  schedule:
+    - cron: '11 8 * * 1-5'
+      timezone: 'America/Toronto'
+    - cron: '19 18 * * 1-5'
+      timezone: 'America/Toronto'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: quant-radar-eod
+  cancel-in-progress: false
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests radar et confidentialité
+        run: node --test tests/radar.test.cjs
+      - name: Démonstration intégrale hors marché
+        run: |
+          node scripts/radar.cjs --demo --output "$RUNNER_TEMP/radar-demo.json"
+          node -e "const x=require(process.argv[1]);if(x.status!=='ready'||x.processed<1||!x.rightsConfirmed||x.signals.length<1)process.exit(1)" "$RUNNER_TEMP/radar-demo.json"
+  schedule_radar:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Analyse sans divulgation de clés ni de cours bruts
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+          PUBLICATION_RIGHTS_CONFIRMED: ${{ secrets.PUBLICATION_RIGHTS_CONFIRMED }}
+        run: node scripts/radar.cjs --output radar/latest.json
+      - name: Publier uniquement un statut ou des résultats autorisés
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add radar/latest.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Radar quotidien: statut et donnees derivees sous autorisation"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi

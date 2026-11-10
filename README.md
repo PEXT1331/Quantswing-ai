@@ -49,6 +49,31 @@ Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, 
 
 Ces indications techniques ne constituent pas une opinion juridique formelle. En cas de doute sur un fournisseur, utiliser un export CSV légitimement obtenu, sans automatiser l'accès.
 
+
+## Radar quotidien automatisé
+
+- Adresse : https://pext1331.github.io/Quantswing-ai/radar.html
+- GitHub Actions : 8 h 11 et 18 h 19 (America/Toronto, du lundi au vendredi). Les tâches peuvent avoir du retard.
+- Univers initial : **huit actions** (jusqu'à 16 appels pour deux passages). Le quota normal gratuit Alpha Vantage est de 25 requêtes/jour; il ne s'agit pas d'un balayage intégral NYSE/NASDAQ/TSX.
+- Moteur : clôtures journalières complètes (OHLCV), RSI, ATR, volume relatif et cassures sur 20 séances. Le score 0–100 est une heuristique, jamais une probabilité de gain.
+- Aucun ordre boursier, aucun montant personnel ni donnée TradingView.
+- **Sans clé API** : statut configuration_required et aucun signal fabriqué.
+- **Clé API privée** : la placer uniquement dans un secret GitHub Actions nommé ALPHAVANTAGE_API_KEY, jamais dans une conversation, le dépôt ni les fichiers de code. Les calculs restent dans la tâche.
+- **Publication publique désactivée par défaut** : mettre le secret PUBLICATION_RIGHTS_CONFIRMED à true uniquement après obtention ou vérification d'une autorisation explicite pour diffuser des données dérivées. La formule gratuite d'Alpha Vantage est destinée à la recherche personnelle et ne donne pas automatiquement un droit de redistribution ou d'affichage public.
+- Le site lit seulement le statut non personnel du fichier radar/latest.json via l'API publique GitHub.
+- L'offre TSX gratuite peut ne pas couvrir tous les symboles; le logiciel indique les indisponibilités plutôt que de présenter des cours inventés.
+
+### Tester sans frais et sans clé
+
+La CI exécute node --test tests/radar.test.cjs et une démonstration intégrale avec des chandeliers fictifs : node scripts/radar.cjs --demo --output /tmp/radar-demo.json. Aucun résultat de démonstration ne constitue un signal réel.
+
+### Sources de la configuration
+
+- https://www.alphavantage.co/documentation/
+- https://www.alphavantage.co/support/
+- https://www.alphavantage.co/terms_of_service/
+- https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
+
 ## Maintenance
 
 - index.html : portefeuille et transactions manuelles.

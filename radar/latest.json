@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": null,
+  "session": null,
+  "mode": "marché quotidien",
+  "provider": "Alpha Vantage",
+  "configured": false,
+  "rightsConfirmed": false,
+  "watched": 8,
+  "processed": 0,
+  "unavailable": 0,
+  "status": "configuration_required",
+  "message": "Le radar est programmé, mais aucune clé Alpha Vantage personnelle ni autorisation de publication des données dérivées n'a encore été confirmée. Aucun signal publié.",
+  "notes": [
+    "Aucun portefeuille personnel lu ou diffusé.",
+    "Les données ne proviennent pas de TradingView.",
+    "Le score éventuel n'est pas une probabilité de gain."
+  ],
+  "signals": []
+}
