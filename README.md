@@ -7,6 +7,7 @@ Application personnelle gratuite de suivi d'un portefeuille saisi manuellement e
 - Tableau de bord : https://pext1331.github.io/Quantswing-ai/
 - Laboratoire des preuves : https://pext1331.github.io/Quantswing-ai/analyse.html
 - Gestion du risque : https://pext1331.github.io/Quantswing-ai/risque.html
+- **Laboratoire de l'or (expérimental)** : https://pext1331.github.io/Quantswing-ai/or.html
 - Générateur CSV Google Colab : https://colab.research.google.com/github/PEXT1331/Quantswing-ai/blob/main/Generateur_CSV_Colab.ipynb
 
 Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, transactions personnelles, montants ou sauvegardes JSON dans le dépôt.
@@ -50,6 +51,41 @@ Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, 
 
 Ces indications techniques ne constituent pas une opinion juridique formelle. En cas de doute sur un fournisseur, utiliser un export CSV légitimement obtenu, sans automatiser l'accès.
 
+
+## Expérience sur l'or — laboratoire de validation
+
+**But : tester avant de financer davantage de développement.** Le portefeuille et son stockage local sont préservés; l'application ne prédit pas actuellement l'or et n'exécute aucun ordre.
+
+### Accéder aux données sans payer TradingView
+
+- [Archive officielle SPDR GLD](https://www.spdrgoldshares.com/usa/gld/) : l'émetteur fournit un fichier d'historique XLSX (données de fonds, valeur/NAV et prix selon les colonnes du document). **Ne pas supposer que le XLSX contient Open, High, Low, Close ET Volume** : les champs doivent être vérifiés. Les conditions du site limitent la redistribution et les usages dérivés, en particulier pour le prix LBMA.
+- [Alpha Vantage, données quotidiennes](https://www.alphavantage.co/documentation/#daily) : propose des OHLCV de titres et FNB avec **clé API personnelle**. La formule gratuite est limitée aux 100 dernières séances par requête quotidienne et à environ 25 appels/jour; l'historique quotidien long est premium. L'API **n'est pas configurée** pour notre site et aucune clé n'est enregistrée dans GitHub.
+- [Archive GOLD D1 exploratoire](https://github.com/tohaitrieu/market-history/blob/master/data/commodities/GOLD/GOLD-D1.csv) : 6 420 observations OHLC, juin 2001 à février 2026, *sans volume*, instrument **GOLD spot / série indicative, pas GLD**. Le dépôt se dit de domaine public, mais ne précise pas l'origine primaire de cette série : **ne pas lui accorder une qualité institutionnelle ni utiliser ses résultats pour négocier**. Les données brutes n'ont pas été ajoutées à notre dépôt.
+
+Cette recherche a révélé une **embûche majeure : il manque encore une source officielle vérifiée, gratuite et suffisamment longue d'OHLCV quotidiens de GLD**, disponible pour tests personnels, sans restriction incompatible. La connexion du site au marché en direct est absente. Ne jamais insérer la clé API personnelle dans un dépôt public.
+
+### Utiliser le nouvel outil
+
+1. Ouvrir `or.html` depuis le site sur Safari/iPad.
+2. Télécharger de manière autorisée un fichier CSV OHLC quotidien : `Date,Open,High,Low,Close` avec `Volume` facultatif et `Symbol/Asset` optionnel.
+3. Importer le fichier **localement**; il n'est envoyé à aucun serveur, pas même à GitHub.
+4. Lire les résultats des deux modèles fixes (cassure de tendance, correction), à comparer au buy-and-hold **10 % or / 90 % liquidités** et à la référence 100 % or. L'application prévoit les frais d'entrée et de sortie et l'exécution à l'ouverture suivante après le signal, avec priorité au stop quand la même séance touche stop et cible.
+5. Changer les frais de simulation pour examiner la robustesse. Le partage développement/test est purement **chronologique et exploratoire**; il n'élimine pas le biais de choix des stratégies ou du jeu de données.
+6. Les historiques de moins de 260 séances ne peuvent pas générer de comparaison. Les historiques âgés de plus de 7 jours portent un avis explicite et ne justifient pas un signal actuel.
+
+### Première vérification exploratoire (ne pas traiter comme preuve de profits)
+
+À partir du dépôt GOLD non vérifié mentionné ci-dessus, sur les séances de test 2018-08-21 à 2026-02-05, avec frais **0,15 % par côté** et **10 % de capital exposé par position** :
+
+| Simulation de recherche | Opérations terminées | Trades gagnants | Profit factor | Rendement de portefeuille |
+|---|---:|---:|---:|---:|
+| Cassure de tendance | 39 | 56,41 % | 1,793 | +2,858 % |
+| Achat après correction | 34 | 50,00 % | 1,269 | +0,876 % |
+| Achat et conservation à 10 % or | 1 | — | — | +31,408 % |
+
+**Les deux stratégies actives sous-performent largement la référence comparable dans cet essai.** Les titres GLD, CGL et CGL.C ont d'autres heures de négociation, frais, cours et risques de change; ces résultats ne sont donc pas transférables tels quels à une négociation réelle.
+
+La simulation ne couvre pas la conversion CAD/USD, les taxes, la liquidité, les ordres réels et la possibilité de glissements supérieurs à la pénalité fixe. Aucun mécanisme de décision automatique sur fonds réels n'est prévu. Le taux de réussite des trades n'est pas la probabilité de gagner de l'argent.
 
 ## Gestion du risque personnel (nouveau)
 
@@ -101,10 +137,12 @@ La CI exécute node --test tests/radar.test.cjs et une démonstration intégrale
 
 - index.html : portefeuille et transactions manuelles.
 - analyse.html : laboratoire historique OHLCV.
+- or.html et scripts/gold-engine.js : laboratoire or/GLD, comparaisons historiques et contrôles méthodologiques.
+- tests/gold.test.cjs : tests du laboratoire de l'or.
 - Generateur_CSV_Colab.ipynb : générateur d'un CSV multi-actions.
 - tests/quant.test.cjs : tests de non-régression.
 - .github/workflows/qualite.yml : contrôles automatiques après chaque modification.
 
-Commande locale de test : node --test tests/quant.test.cjs.
+Commande locale de test : node --test tests/quant.test.cjs tests/radar.test.cjs tests/risk.test.cjs tests/gold.test.cjs.
 
 Budget logiciel supplémentaire visé : 0 $ (selon limites des services gratuits).
