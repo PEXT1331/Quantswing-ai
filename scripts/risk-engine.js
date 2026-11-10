@@ -164,7 +164,7 @@
   const symbolIndex=['symbol','ticker'].map(idx).find(i=>i>=0)??-1;
   if([dateIndex,open,high,low,close,volume].some(i=>i<0))throw Error('Colonnes Date, Open, High, Low, Close, Volume nécessaires.');
   const requested=cleanSymbol(ticker),fallback=cleanSymbol(filename.replace(/\.csv$/i,''));
-  const tickerName=VALID.test(requested)?requested:VALID.test(fallback)?fallback:'';
+  const tickerName=VALID.test(requested)?requested:symbolIndex<0&&VALID.test(fallback)?fallback:'';
   const found=new Map();
   const localNow=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
   const nowTimestamp=Date.parse(localNow+'T12:00:00Z');
