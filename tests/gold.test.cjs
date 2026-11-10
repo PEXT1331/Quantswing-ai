@@ -139,3 +139,14 @@ test('Simulation sur 10 000 bougies : statistiques finies',()=>{
  assert.equal(s.status,'ok');
  assert.ok(s.strategies.every(x=>Number.isFinite(x.portfolioReturnPct)&&Number.isFinite(x.maxDrawdownPct)));
 });
+
+test('Les bougies futures et la séance courante non terminée sont écartées',()=>{
+ const rows=['Date,Open,High,Low,Close,Volume'];
+ for(let i=0;i<300;i++){const date=new Date(Date.UTC(2025,0,1+i)).toISOString().slice(0,10);rows.push(date+',100,102,98,100,1000')}
+ rows.push('2026-11-10,100,110,90,100,1000');
+ rows.push('2026-11-11,100,110,90,100,1000');
+ const before=gold.parseOHLCV(rows.join('\n'),{filename:'GLD.csv',asOf:new Date('2026-11-10T15:00:00Z')});
+ assert.equal(before.partial,2);assert.equal(before.bars.length,300);
+ const after=gold.parseOHLCV(rows.join('\n'),{filename:'GLD.csv',asOf:new Date('2026-11-11T01:00:00Z')});
+ assert.equal(after.partial,1);assert.equal(after.bars.length,301);
+});
