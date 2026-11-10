@@ -92,7 +92,7 @@
   if(target!==null&&(target-entry)/loss<1.5)warnings.push('Gain/risque inférieur à 1,5:1 avant frais.');
   return {valid:true,stop:round(selected,6),support:round(usableSupport,6),atrStop:round(usableVol,6),target:round(target,6),trailing:round(trailing,6),riskPerShare:round(loss,6),rewardRisk:target!==null?round((target-entry)/loss,3):null,warnings};
  }
- function positionPlan(state,{symbol,currency,entry,stop,target,riskPct=.5,maxTickerPct=10,maxTotalRiskPct=2,feePct=.15,sectorExposureCAD=null,sectorLimitPct=25,marketAsOf=null}){
+ function positionPlan(state,{symbol,currency,entry,stop,target,riskPct=.5,maxTickerPct=10,maxTotalRiskPct=2,feePct=.15,sectorExposureCAD=null,sectorLimitPct=25,marketAsOf=null},now=new Date()){
   const reasons=[],warnings=[];
   const s=cleanSymbol(symbol);if(!VALID.test(s))reasons.push('Symbole invalide');
   if(!['CAD','USD'].includes(currency))reasons.push('Devise invalide');
@@ -103,7 +103,7 @@
   if(!finite(maxTotalRiskPct)||maxTotalRiskPct<=0||maxTotalRiskPct>10)reasons.push('Plafond de risque cumulé invalide');
   if(!finite(feePct)||feePct<0||feePct>3)reasons.push('Frais simulés invalides');
   if(sectorExposureCAD!==null&&(!nonnegative(sectorExposureCAD)||!finite(sectorLimitPct)||sectorLimitPct<=0||sectorLimitPct>100))reasons.push('Exposition du secteur invalide');
-  if(marketAsOf!==null){const date=Date.parse(String(marketAsOf)+'T12:00:00Z');const age=Date.now()-date;if(!Number.isFinite(date)||age>7*86400000||age < -86400000)reasons.push('Chandeliers importés périmés ou datés dans le futur : nouvelles données nécessaires.');}
+  if(marketAsOf!==null){const date=Date.parse(String(marketAsOf)+'T12:00:00Z');const age=now.getTime()-date;if(!Number.isFinite(date)||age>7*86400000||age < -86400000)reasons.push('Chandeliers importés périmés ou datés dans le futur : nouvelles données nécessaires.');}
   if(!state||state.valid!==true)reasons.push(...(state?.issues||['Portefeuille indisponible']));
   if(reasons.length)return {eligible:false,quantity:0,reasons:[...new Set(reasons)],warnings,hardStop:true};
   const fx=currency==='CAD'?1:state.fx;
