@@ -9,7 +9,7 @@ function barSeries(n=420,price=100){
 }
 function csv(n=450){const rows=['Date,Open,High,Low,Close,Volume'];let p=100;for(let i=0;i<n;i++){const date=new Date(Date.UTC(2016,0,1+i)).toISOString().slice(0,10),o=p,c=p*(1+.001+Math.sin(i*.12)*.01);rows.push([date,o.toFixed(4),(Math.max(o,c)*1.01).toFixed(4),(Math.min(o,c)*.99).toFixed(4),c.toFixed(4),100000+(i%17)*5000].join(','));p=c}return rows.join('\n')}
 const fakeModel={id:'fixture',name:'fixture',hold:10,stopATR:1,targetATR:1,go:(b,m)=>b.date==='2016-10-27'};
-function testModel(bars,signal=300){return {id:'fixture',name:'fixture',hold:10,stopATR:1,targetATR:1,go:(b,m)=>b.date===bars[signal].date}}
+function testModel(bars,signal=350){return {id:'fixture',name:'fixture',hold:10,stopATR:1,targetATR:1,go:(b,m)=>b.date===bars[signal].date}}
 test('La page or existe et son script se compile',()=>{
  assert.match(html,/Laboratoire de l.or/);assert.match(html,/src="scripts\/gold-engine\.js"/);
  assert.doesNotThrow(()=>new Function(html.match(/<script>([\s\S]+?)<\/script>/)[1]));
@@ -53,7 +53,7 @@ test('Plusieurs instruments mélangés sont refusés explicitement',()=>{
  const data=c.map((line,i)=>i===0?line:(i%2===0?'GLD,':'GOLD,')+line).join('\n');
  assert.throws(()=>gold.parseOHLCV(data,{filename:'bundle.csv'}),/multi-actifs/);
  const filtered=gold.parseOHLCV(data,{filename:'bundle.csv',symbol:'GLD'});
- assert.equal(filtered.ticker,'GLD');assert.equal(filtered.bars.length,159);
+ assert.equal(filtered.ticker,'GLD');assert.equal(filtered.bars.length,160);
 });
 test('Exclure les séries non quotidiennes si la colonne TimeFrame existe',()=>{
  const rows=['Asset,TimeFrame,Time,Open,High,Low,Close'];
@@ -76,19 +76,19 @@ test('Les deux stratégies ont des règles fixes et distinctes',()=>{
  assert.notEqual(gold.MODELS[0].go.toString(),gold.MODELS[1].go.toString());
 });
 test('Une entrée a lieu au prochain Open et jamais au Close de signal',()=>{
- const bars=barSeries(450);bars[301]={...bars[301],o:105,hi:106,lo:104,c:105};
+ const bars=barSeries(450);bars[351]={...bars[351],o:105,hi:106,lo:104,c:105};
  const model=testModel(bars);
  const s=gold.evaluate(bars,model);
- assert.equal(s.trades,1);assert.equal(s.entries[0].entryDate,bars[301].date);
+ assert.equal(s.trades,1);assert.equal(s.entries[0].entryDate,bars[351].date);
  assert.equal(s.entries[0].entry,105);
 });
 test('Stop et cible atteints sur la même séance : stop prioritaire',()=>{
- const bars=barSeries(450);bars[301]={...bars[301],o:100,hi:120,lo:80,c:100};
+ const bars=barSeries(450);bars[351]={...bars[351],o:100,hi:120,lo:80,c:100};
  const s=gold.evaluate(bars,testModel(bars));
  assert.equal(s.trades,1);assert.equal(s.entries[0].reason,'Stop');assert.ok(s.entries[0].returnPct<0);
 });
 test('Ouverture en gap sous le stop : sortir au prix Open',()=>{
- const bars=barSeries(450);bars[302]={...bars[302],o:70,hi:75,lo:65,c:70};
+ const bars=barSeries(450);bars[352]={...bars[352],o:70,hi:75,lo:65,c:70};
  const s=gold.evaluate(bars,testModel(bars));
  assert.equal(s.trades,1);assert.equal(s.entries[0].reason,'Gap sous stop');
  assert.equal(s.entries[0].exit,70);assert.ok(s.entries[0].returnPct<-25);
