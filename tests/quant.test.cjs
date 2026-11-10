@@ -103,3 +103,34 @@ test('Simulated returns include both legs of transaction costs',()=>{
  const trade=x.out[0];assert.ok(trade);assert.equal(trade.why,'Durée');
  assert.ok(Math.abs(trade.returnNet-((1-.0015)/(1+.0015)-1))<1e-10);
 });
+
+
+test('Malformed OHLCV rows are rejected before backtesting',()=>{
+ const h=labAPI(),rows=['Date,Open,High,Low,Close,Volume'];
+ for(let i=0;i<130;i++){const date=new Date(Date.UTC(2020,0,1+i)).toISOString().slice(0,10);rows.push(date+',100,103,97,100,250000')}
+ rows.push('2022-01-01,100,91,109,100,250000');
+ const x=h.readSeries('TEST.TO.csv',rows.join('\n'));
+ assert.equal(x.invalid,1);assert.equal(x.bars.length,130);
+});
+test('Unexpected network requests are absent from the browser source',()=>{
+ assert.doesNotMatch(script(home),/\bfetch\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(/);
+ assert.doesNotMatch(script(lab),/\bfetch\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(/);
+});
+test('Stress: 120 synthetic symbols and 36,000 daily candles',()=>{
+ const h=labAPI();let trades=0;
+ for(let symbol=0;symbol<120;symbol++){
+   let price=80+symbol, bars=[];
+   for(let i=0;i<300;i++){
+     const date=new Date(Date.UTC(2020,0,1+i)).toISOString().slice(0,10);
+     const open=price;
+     const close=price*(1+.001+Math.sin((i+symbol)*.83)*.018);
+     bars.push({date,o:open,hi:Math.max(open,close)*1.019,lo:Math.min(open,close)*.981,c:close,v:200000+(i%19===3?250000:0)});
+     price=close;
+   }
+   for(const model of h.strategies){const result=h.testOne({ticker:'S'+symbol,bars},model,.30);
+     assert.ok(result.out.every(t=>Number.isFinite(t.returnNet)&&['Test','Développement'].includes(t.sample)));
+     trades+=result.out.length;
+   }
+ }
+ assert.ok(Number.isInteger(trades));
+});
