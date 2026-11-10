@@ -24,7 +24,7 @@
   row.push(value.trim());if(row.some(Boolean))lines.push(row);
   return lines;
  }
- function parseOHLCV(source,{filename='',symbol=''}={}){
+ function parseOHLCV(source,{filename='',symbol='',asOf=new Date()}={}){
   if(typeof source!=='string'||source.length>8e6)throw Error('Le fichier CSV doit contenir 8 Mo ou moins.');
   const lines=csvLines(source);if(lines.length<21||lines.length>25000)throw Error('Au moins 20 chandelles et au plus 25 000 lignes sont nécessaires.');
   const cols=lines.shift().map(x=>x.toLowerCase().replace(/[^a-z]/g,''));
@@ -33,7 +33,9 @@
   if([date,o,hi,lo,c].some(i=>i<0))throw Error('Colonnes Date/Time, Open, High, Low, Close nécessaires. Volume recommandé, mais facultatif.');
   const wanted=String(symbol||'').trim().toUpperCase(),fileSymbol=String(filename).replace(/\.csv$/i,'').toUpperCase().replace(/[^A-Z0-9.\-].*$/,'');
   if(wanted&&!/^[A-Z0-9][A-Z0-9.\-]{0,17}$/.test(wanted))throw Error('Symbole invalide.');
-  const instruments=new Map();let invalid=0,filtered=0,duplicates=0,intraday=0;
+  const clock=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(asOf).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
+  const today=clock.year+'-'+clock.month+'-'+clock.day,hour=Number(clock.hour);
+  const instruments=new Map();let invalid=0,filtered=0,duplicates=0,intraday=0,partial=0;
   for(const row of lines){
    if(tf>=0&&String(row[tf]).trim().toUpperCase()!=='D1'){intraday++;continue}
    const asset=sy>=0?String(row[sy]||'').trim().toUpperCase():wanted||fileSymbol||'INCONNU';
@@ -41,6 +43,7 @@
    if(wanted&&asset!==wanted){filtered++;continue}
    const dateValue=String(row[date]||'').slice(0,10);
    const parsedDate=Date.parse(dateValue+'T00:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)||!FIN(parsedDate)||new Date(parsedDate).toISOString().slice(0,10)!==dateValue){invalid++;continue}
+   if(dateValue>today||dateValue===today&&hour<19){partial++;continue}
    const vals=[o,hi,lo,c].map(i=>Number(String(row[i]||'').replace(/\s/g,'')));
    const volume=v<0?null:Number(String(row[v]||'').trim());
    if(vals.some(x=>!FIN(x)||x<=0)||!FIN(volume)&&v>=0||volume!==null&&volume<0){invalid++;continue}
@@ -57,7 +60,7 @@
   if(bars.length<20)throw Error('Pas assez de chandelles valides après nettoyage.');
   let jumps=0;
   for(let i=1;i<bars.length;i++){const ratio=bars[i].c/bars[i-1].c;if(ratio>1.4||ratio<.6)jumps++}
-  return {ticker,bars,first:bars[0].date,last:bars[bars.length-1].date,invalid,duplicates,filtered,intraday,jumps,hasVolume:bars.some(x=>x.v!==null)};
+  return {ticker,bars,first:bars[0].date,last:bars[bars.length-1].date,invalid,duplicates,filtered,intraday,partial,jumps,hasVolume:bars.some(x=>x.v!==null)};
  }
  const average=(arr,end,window,key)=>{let s=0;for(let i=end-window+1;i<=end;i++)s+=arr[i][key];return s/window};
  function metricsAt(bars,i){
