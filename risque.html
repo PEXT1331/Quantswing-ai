@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr-CA"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1422"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';connect-src 'none';img-src 'none';font-src 'self';frame-src 'none';object-src 'none';base-uri 'none';form-action 'none'">
+<title>QuantSwing AI · Plan de risque</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1524;--panel:#14253b;--panel2:#1c344c;--line:#334d67;--ink:#eff7ff;--muted:#aac0d2;--blue:#97c0ff;--mint:#60d9b2;--red:#ffa5b3;--amber:#ffd49b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#1b334b 0%,var(--bg) 52%);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}
+main{max-width:1090px;margin:auto;padding:18px 15px 80px}a{color:var(--blue)}h1{font-size:clamp(25px,4vw,36px);line-height:1.18;margin:15px 0 8px}h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:0 0 10px}p{margin:7px 0 14px}
+.hero{border:1px solid #356b72;background:linear-gradient(130deg,#15434a,#14263b 60%);border-radius:19px;padding:22px;margin:18px 0}.eyebrow{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.08em;color:#8de2cd}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:15px 0}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.muted{color:var(--muted)}.small{font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.four{grid-template-columns:repeat(4,minmax(0,1fr))}.tile{border:1px solid #35516a;background:var(--panel2);border-radius:12px;padding:12px}.tile span{font-size:12px;color:var(--muted);display:block}.tile strong{font-size:clamp(20px,3vw,28px);font-weight:800;display:block;margin-top:4px}.green{color:var(--mint)}.red{color:var(--red)}.amber{color:var(--amber)}.hint{border-left:3px solid #83b6fb;background:#22394e77;padding:11px;border-radius:10px;margin:11px 0}.warning{border:1px solid #8c7247;background:#352b20;color:#ffe5b6;padding:13px;border-radius:11px;margin:11px 0}.goodbox{border:1px solid #4f8572;background:#18372f;padding:13px;border-radius:11px;margin:11px 0}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}input,select,button{font:inherit}input,select{display:block;width:100%;background:#091827;border:1px solid #38536d;color:var(--ink);border-radius:10px;padding:11px;font-size:16px;min-height:43px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button{border:1px solid #4b958a;background:#25675e;color:#eaffe9;border-radius:10px;padding:11px 15px;font-weight:750;cursor:pointer}button.secondary{border-color:#3b5773;background:#233a53;color:var(--ink)}button:disabled{cursor:not-allowed;opacity:.5}
+.pill{font-size:12px;display:inline-block;border:1px solid #496b78;border-radius:99px;color:#b7ecdd;padding:5px 10px}.stack{display:grid;gap:7px}.divider{border-top:1px solid var(--line);margin:18px 0}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:610px}th,td{text-align:left;border-bottom:1px solid #30445a;padding:10px 8px;font-size:13px}th{color:var(--muted)}th:last-child,td:last-child{text-align:right}
+#privateArea{position:relative}body.locked #privateArea{min-height:210px}body.locked #privateArea::after{content:"🔒 Données personnelles masquées. Appuie sur « Déverrouiller l'affichage » pour accéder aux calculs locaux.";position:absolute;inset:0;z-index:5;display:grid;place-items:center;text-align:center;background:rgba(9,20,33,.99);padding:35px;border:1px solid #4b708a;border-radius:17px;font-weight:750;color:#e2f2fd}
+#messageList{margin:9px 0;padding-left:20px}#messageList li{margin:7px 0}#saveStatus{min-height:20px}footer{text-align:center;color:var(--muted);font-size:12px;padding-top:27px}
+@media(max-width:730px){.panel{padding:14px}.four{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:12px 12px 75px}.hero{padding:19px}.grid{grid-template-columns:1fr}}
+</style></head>
+<body class="locked"><main>
+<div class="row"><a href="./">← Accueil QuantSwing AI</a><button type="button" id="unlock" class="secondary" aria-pressed="false">Déverrouiller l'affichage</button></div>
+<div class="hero"><span class="eyebrow">Gestion du risque · Portefeuille local</span><h1>Avant d'acheter, mesure ta perte possible.</h1><p>Calcule un stop technique, le potentiel vers une résistance et une quantité compatible avec le capital que tu as réellement enregistré. Les données du portefeuille ne quittent pas ton navigateur.</p><span class="pill">Aucun ordre de courtage · Aucun signal garanti</span></div>
+<div class="warning">Les stops ne garantissent jamais un montant de perte : un gap, une suspension ou un manque de liquidité peut rendre l'exécution beaucoup moins favorable. Cet outil est une simulation de recherche, pas une instruction d'achat.</div>
+<div id="privateArea" inert>
+<section class="panel"><div class="row"><h2>01 · Ton portefeuille</h2><div class="row"><button id="reload" class="secondary" type="button">Actualiser</button><button id="demo" class="secondary" type="button">Démo fictive</button></div></div>
+<p id="modeNote" class="muted small">Lecture locale de ton portefeuille QuantSwing AI.</p>
+<div class="grid four"><div class="tile"><span>Valeur totale estimée</span><strong id="equity">—</strong></div><div class="tile"><span>Liquidités CAD</span><strong id="cash">—</strong></div><div class="tile"><span>Risque théorique aux stops</span><strong id="riskHeld">—</strong></div><div class="tile"><span>Positions ouvertes</span><strong id="positionCount">—</strong></div></div>
+<p id="portfolioWarnings" class="warning" role="status" aria-live="polite">Vérification des positions…</p>
+<h3 style="margin-top:19px">Stops de tes positions</h3><div class="tablewrap"><table><thead><tr><th>Titre</th><th>Quantité</th><th>Dernier cours saisi</th><th>Stop local</th><th>Enregistrer un stop</th></tr></thead><tbody id="holdings"></tbody></table></div>
+<p id="saveStatus" class="small muted" role="status"></p><p class="small muted">Enregistrer un stop modifie seulement les données locales sauvegardées dans ce navigateur. <strong>Aucun ordre stop réel n'est créé chez un courtier.</strong> Exporter une sauvegarde après modification.</p>
+</section>
+<section class="panel"><h2>02 · Construire un plan technique</h2>
+<p class="small muted">Entre des valeurs de chandeliers vérifiées. Le moteur compare un stop sous le dernier creux (*Low*) et un stop calculé avec la volatilité (*ATR*). Le plus haut récent (*High*) sert à repérer une résistance, pas à promettre un objectif.</p>
+<div class="hint"><strong>Préremplir depuis de vrais chandeliers</strong><p class="small muted">Importe un CSV local (Date, Open, High, Low, Close, Volume), éventuellement avec la colonne Symbol pour plusieurs actions. L'application calcule les niveaux des 61 dernières séances ou plus. Aucun fichier n'est envoyé sur Internet.</p><label for="localCsv">Fichier historique CSV</label><input type="file" id="localCsv" accept=".csv,text/csv"><p id="csvStatus" class="small muted" role="status">Sinon, remplis les chiffres manuellement ci-dessous.</p></div><form id="planForm">
+<div class="grid">
+<div><label for="symbol">Action</label><input id="symbol" maxlength="18" placeholder="SHOP.TO, NVDA…" autocomplete="off" required></div>
+<div><label for="currency">Devise du titre</label><select id="currency"><option value="CAD">CAD</option><option value="USD">USD</option></select></div>
+<div><label for="entry">Prix d'entrée envisagé</label><input id="entry" type="number" min="0.000001" step="any" placeholder="Ex. 100" required></div>
+<div><label for="atr">ATR quotidien (14 séances)</label><input id="atr" type="number" min="0.000001" step="any" placeholder="Ex. 2" required></div>
+<div><label for="swingLow">Low : dernier creux technique</label><input id="swingLow" type="number" min="0.000001" step="any" placeholder="Ex. 94" required></div>
+<div><label for="high20">High : résistance ou sommet à surveiller</label><input id="high20" type="number" min="0.000001" step="any" placeholder="Ex. 112"></div>
+<div><label for="stopMode">Méthode de stop</label><select id="stopMode"><option value="support">Sous le creux − 0,25 × ATR</option><option value="atr">Entrée − 1,5 × ATR</option><option value="wide">Le plus éloigné des deux</option></select></div>
+<div><label for="targetMode">Méthode d'objectif</label><select id="targetMode"><option value="resistance">Résistance du High</option><option value="2r">Objectif hypothétique de 2R</option><option value="manual">Objectif manuel</option></select></div>
+<div><label for="manualTarget">Objectif manuel (si sélectionné)</label><input id="manualTarget" type="number" min="0.000001" step="any" placeholder="Ex. 115"></div>
+<div><label for="highSinceEntry">Plus haut depuis l'entrée (facultatif)</label><input id="highSinceEntry" type="number" min="0.000001" step="any" placeholder="Pour visualiser un stop suiveur"></div>
+</div>
+<div class="divider"></div><h3>Limites de risque à tester</h3>
+<div class="grid"><div><label for="riskPct">Budget de perte par trade (% du portefeuille)</label><select id="riskPct"><option value=".25">0,25 % · volatile</option><option value=".5" selected>0,50 % · standard</option><option value="1">1,00 % · plus agressif</option></select></div>
+<div><label for="maxTickerPct">Exposition maximale à ce titre</label><select id="maxTickerPct"><option value="5">5 %</option><option value="10" selected>10 %</option><option value="15">15 %</option></select></div>
+<div><label for="maxTotalRiskPct">Risque cumulé total</label><select id="maxTotalRiskPct"><option value="1">1 %</option><option value="2" selected>2 %</option><option value="3">3 %</option></select></div>
+<div><label for="feePct">Frais + glissement estimés (chaque côté)</label><select id="feePct"><option value=".15" selected>0,15 %</option><option value=".30">0,30 %</option><option value=".50">0,50 %</option></select></div>
+<div><label for="sectorExposureCAD">Capital déjà investi dans ce secteur (CAD) — facultatif</label><input id="sectorExposureCAD" type="number" min="0" step="any" placeholder="Laisser vide si inconnu"></div>
+<div><label for="sectorLimitPct">Exposition maximale au secteur si renseigné</label><select id="sectorLimitPct"><option value="20">20 %</option><option value="25" selected>25 %</option><option value="30">30 %</option></select></div></div>
+<div style="margin-top:17px" class="row"><button type="submit">Calculer le plan</button><span class="small muted">Calcul local, aucune recommandation envoyée à ChatGPT.</span></div></form>
+</section>
+<section class="panel" id="output" aria-live="polite"><h2>03 · Verdict et explications</h2><p class="muted">Remplis les niveaux et appuie sur « Calculer le plan ».</p>
+<div id="outputBody" class="stack"></div></section>
+</div>
+<footer>QuantSwing AI · La page est publique, mais tes données sont stockées localement · Aucune transaction automatique</footer>
+</main>
+<script src="scripts/risk-engine.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),KEY='quantswing-ipad-v1',F=window.QuantRisk;
+const fmt=v=>Number.isFinite(v)?new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(v):'—';
+const amount=v=>Number.isFinite(v)?new Intl.NumberFormat('fr-CA',{maximumFractionDigits:4}).format(v):'—';
+const num=id=>$(id).value.trim()===''?null:Number($(id).value);
+let demo=false,data=null,state=null,importedAsOf=null;
+function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(className)n.className=className;return n}
+function createDemo(){return {version:1,cash:[{side:'deposit',amount:10000}],trades:[],quotes:{},risk:{},fx:null}}
+function readLocal(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):{version:1,cash:[],trades:[],quotes:{},risk:{},fx:null}}catch(e){return null}}
+function flag(node,text,ok){node.textContent=text;node.className=ok?'goodbox':'warning'}
+function refresh(useDemo=false){demo=useDemo;data=demo?createDemo():readLocal();state=F.snapshot(data);
+ $('modeNote').textContent=demo?'MODE DÉMONSTRATION · 10 000 $ CAD fictifs, aucune modification de tes données personnelles.':'Données locales issues de QuantSwing AI (même navigateur et même mode Safari).';
+ $('equity').textContent=fmt(state.equity);$('cash').textContent=fmt(state.cash);$('riskHeld').textContent=state.valid?fmt(state.openRisk):'Incomplet';$('positionCount').textContent=String(state.positions.length);
+ const problems=state.issues.length?state.issues.join(' · '):'Les cours, devises et stops nécessaires sont présents. Vérifie qu’ils sont exacts et récents.';
+ flag($('portfolioWarnings'),problems,!state.issues.length);
+ renderPositions();$('outputBody').replaceChildren();$('output').querySelector('p')?.replaceWith(el('p','Remplis les niveaux et appuie sur « Calculer le plan ».','muted'));}
+function renderPositions(){const body=$('holdings');body.replaceChildren();if(state.positions.length===0){const row=el('tr');const cell=el('td',demo?'Démo : aucune position ouverte.':'Aucune position ouverte (ou aucun titre enregistré).');cell.colSpan=5;row.append(cell);body.append(row);return}
+ for(const p of state.positions){
+  const row=el('tr');row.append(el('td',p.symbol),el('td',amount(p.qty)),el('td',p.price===null?'À saisir':amount(p.price)+' '+p.currency));
+  const status=el('td',p.stop?amount(p.stop)+' '+p.currency:'Non défini',p.stop?'green':'amber');row.append(status);
+  const cell=el('td'),group=el('div');group.className='row';const input=el('input');input.type='number';input.step='any';input.min='0.000001';input.placeholder='Stop';input.value=p.stop||'';input.style.maxWidth='115px';input.setAttribute('aria-label','Nouveau stop pour '+p.symbol);
+  const btn=el('button','Sauver','secondary');btn.type='button';btn.disabled=demo;btn.addEventListener('click',()=>{
+   const stop=Number(input.value);
+   if(!Number.isFinite(stop)||stop<=0||!p.price||stop>=p.price||p.stale){$('saveStatus').textContent='Stop refusé : il doit être positif, sous le cours saisi et basé sur un cours récent.';return}
+   try{
+    const live=readLocal();if(!live||live.version!==1)throw Error('Portefeuille local indisponible');
+    const fresh=F.snapshot(live),owned=fresh.positions.find(x=>x.symbol===p.symbol);
+    if(!owned||!owned.price||owned.stale||stop>=owned.price)throw Error('Position ou dernier cours modifié : actualise avant de sauvegarder');
+    if(!live.risk||typeof live.risk!=='object'||Array.isArray(live.risk))live.risk={};
+    live.risk[p.symbol]={...(live.risk[p.symbol]||{}),stop};
+    localStorage.setItem(KEY,JSON.stringify(live));
+    $('saveStatus').textContent='Stop local enregistré pour '+p.symbol+'. Ce n’est PAS un ordre de courtage. Fais une sauvegarde JSON.';
+    refresh(false);
+   }catch(e){$('saveStatus').textContent='Enregistrement impossible : '+e.message}
+  });
+  group.append(input,btn);cell.append(group);row.append(cell);body.append(row);
+ }
+}
+function calculate(event){event?.preventDefault();const body=$('outputBody');body.replaceChildren();const symbol=F.cleanSymbol($('symbol').value),currency=$('currency').value;
+ const existing=state.positions.find(x=>x.symbol===symbol);
+ const tech=F.technicalLevels({entry:num('entry'),atr:num('atr'),swingLow:num('swingLow'),high20:num('high20'),mode:$('stopMode').value,targetMode:$('targetMode').value,manualTarget:num('manualTarget'),highSinceEntry:num('highSinceEntry'),currentStop:existing?.stop});
+ if(!tech.valid){flag($('portfolioWarnings'),state.issues.length?state.issues.join(' · '):'Vérifications du portefeuille terminées',!state.issues.length);body.append(el('div',tech.issues.join(' · '),'warning'));return}
+ const box=el('div');box.className='grid four';
+ for(const [label,value] of [['Stop proposé',amount(tech.stop)+' '+currency],['Stop sous le Low',tech.support===null?'Non calculable':amount(tech.support)+' '+currency],['Stop ATR',tech.atrStop===null?'Non calculable':amount(tech.atrStop)+' '+currency],['Objectif potentiel',tech.target===null?'Non disponible':amount(tech.target)+' '+currency]]){
+  const tile=el('div');tile.className='tile';tile.append(el('span',label),el('strong',value));box.append(tile);
+ }
+ body.append(box);
+ if(tech.trailing!==null)body.append(el('p','Stop suiveur théorique depuis le plus haut atteint : '+amount(tech.trailing)+' '+currency+'. Il ne doit jamais être abaissé pour élargir le risque.','hint'));
+ for(const w of tech.warnings)body.append(el('p',w,'warning small'));
+ const plan=F.positionPlan(state,{symbol,currency,entry:num('entry'),stop:tech.stop,target:tech.target,riskPct:num('riskPct'),maxTickerPct:num('maxTickerPct'),maxTotalRiskPct:num('maxTotalRiskPct'),feePct:num('feePct'),sectorExposureCAD:num('sectorExposureCAD'),sectorLimitPct:num('sectorLimitPct'),marketAsOf:importedAsOf});
+ const verdict=el('div');flag(verdict,plan.eligible?'PLAN CONFORME AUX PLAFONDS DE SIMULATION — pas une recommandation d’achat.':'NE PAS OUVRIR DE POSITION SUR CES DONNÉES — conditions ou limites non satisfaites.',plan.eligible);body.append(verdict);
+ if(plan.hardStop){body.append(el('p','Un ou plusieurs renseignements du portefeuille doivent être corrigés avant de calculer une quantité fiable.','muted'))}
+ else{
+  const tiles=el('div');tiles.className='grid four';
+  const parts=[['Quantité admissible',plan.eligible?plan.quantity+' action(s)':'0 (bloqué)'],['Capital nécessaire',fmt(plan.positionCostCAD)],['Perte estimée au stop',fmt(plan.lossToStopCAD)],['Gain/risque net',plan.rewardRiskNet===null?'—':amount(plan.rewardRiskNet)+':1']];
+  for(const [a,b] of parts){const tile=el('div');tile.className='tile';tile.append(el('span',a),el('strong',b));tiles.append(tile)}body.append(tiles);
+  const c=el('p','Plafonds appliqués : '+Object.entries(plan.caps).map(([k,v])=>k+' → '+v+' action(s)').join(' · '),'hint small');body.append(c);
+  body.append(el('p','Budget de risque : '+fmt(plan.riskBudgetCAD)+' · Risque théorique cumulé après le plan : '+fmt(plan.totalRiskToStopsCAD)+' · Risque restant avant l’achat : '+fmt(plan.remainingRiskCAD),'muted small'));
+ }
+ for(const issue of plan.reasons)body.append(el('p',issue,'warning small'));
+ for(const w of plan.warnings)body.append(el('p',w,'muted small'));
+ body.append(el('p','Ces niveaux utilisent uniquement les chiffres que tu as saisis. Ils ne tiennent pas compte des nouvelles futures, de la liquidité réelle, d’un gap à l’ouverture ni des taxes. Aucun taux de réussite futur n’est déduit du plan.','muted small'));
+}
+
+$('localCsv').addEventListener('change',async e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ try{
+  if(file.size>6e6)throw Error('Fichier trop volumineux (limite 6 Mo).');
+  if(demo){refresh(false);$('symbol').value='';}
+  const l=F.levelsFromCSV({csv:await file.text(),filename:file.name,ticker:$('symbol').value});
+  importedAsOf=l.date;
+  $('symbol').value=l.symbol;
+  $('currency').value=l.symbol.endsWith('.TO')||l.symbol.endsWith('.TRT')?'CAD':'USD';
+  $('entry').value=l.entry;$('atr').value=l.atr;$('swingLow').value=l.swingLow;
+  $('high20').value=l.resistanceHigh??'';
+  $('targetMode').value=l.resistanceHigh?'resistance':'2r';
+  $('csvStatus').textContent='Données locales : '+l.symbol+' · clôture '+l.date+' · '+l.barCount+' chandeliers · volume relatif '+amount(l.relativeVolume)+'× · ancien sommet 20j '+amount(l.breakoutHigh20)+(l.stale?' · ⚠️ DONNÉES PÉRIMÉES : plan bloqué':' · Source CSV non vérifiée : contrôle les données.');
+  calculate();
+ }catch(err){importedAsOf=null;$('csvStatus').textContent='Impossible d’importer : '+(err.message||'CSV invalide');}
+ finally{e.target.value=''}
+});
+$('planForm').addEventListener('input',e=>{if(importedAsOf&&e.target.id==='symbol'){importedAsOf=null;$('csvStatus').textContent='Symbole modifié : les anciens niveaux ne sont plus associés à ce nouveau titre. Importe son historique ou vérifie les prix manuellement.';}});
+$('unlock').addEventListener('click',()=>{
+ const locked=document.body.classList.toggle('locked');$('privateArea').inert=locked;$('unlock').textContent=locked?'Déverrouiller l’affichage':'Masquer les montants';$('unlock').setAttribute('aria-pressed',String(!locked));
+});
+$('demo').addEventListener('click',()=>{importedAsOf=null;$('csvStatus').textContent='Démo entièrement fictive : aucune donnée boursière réelle.';refresh(true);$('symbol').value='DEMO';$('currency').value='CAD';$('entry').value='100';$('atr').value='2';$('swingLow').value='94';$('high20').value='112';$('stopMode').value='support';$('targetMode').value='resistance';$('manualTarget').value='';$('highSinceEntry').value='';calculate()});
+$('reload').addEventListener('click',()=>{importedAsOf=null;$('csvStatus').textContent='Renseigne des données manuelles ou importe un nouveau CSV.';refresh(false)});
+$('planForm').addEventListener('submit',calculate);
+window.addEventListener('storage',e=>{if(e.key===KEY&&!demo)refresh(false)});
+refresh(false);
+</script>
+</body></html>

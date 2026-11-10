@@ -17,7 +17,7 @@ function fakeDoc(){
  }}}
 function portfolio(saved){
  const storage={getItem(){return saved?JSON.stringify(saved):null},setItem(){}};
- const win={scrollTo(){},clearTimeout(){},setTimeout(){},open(){}};
+ const win={scrollTo(){},clearTimeout(){},setTimeout(){},open(){},addEventListener(){}};
  return new Function('document','window','localStorage','crypto','confirm',script(home)+';return {ledger,data,verifyImportedBackup};')(fakeDoc(),win,storage,{randomUUID:()=> 'unit-id'},()=>true);
 }
 function labAPI(){return new Function('document',script(lab)+';return {readSeries,readBundle,testOne,strategies,wilson};')(fakeDoc())}
