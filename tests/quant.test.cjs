@@ -64,3 +64,42 @@ test('Do not leak development trades that finish within test period',()=>{
  for(let i=0;i<300;i++){const date=new Date(Date.UTC(2024,0,1+i)).toISOString().slice(0,10),o=price,c=price*(1+.004+Math.sin(i*.6)*.008);bars.push({date,o,hi:Math.max(o,c)*1.024,lo:Math.min(o,c)*.976,c,v:250000+(i%17===4?500000:0)});price=c}
  const s={ticker:'FIX',bars};for(const model of h.strategies){const x=h.testOne(s,model,.3);for(const t of x.out){assert.ok(t.sample==='Test'?t.signal>=x.cut:t.exitDate<x.cut)}}
 });
+
+
+function syntheticBars(n=110){
+ const bars=[];for(let i=0;i<n;i++){const date=new Date(Date.UTC(2024,0,1+i)).toISOString().slice(0,10);bars.push({date,o:100,hi:101,lo:99,c:100,v:500000})}
+ return bars;
+}
+test('A same-day stop and target uses the stop: conservative candle ordering',()=>{
+ const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:3,stop:1,target:1,go:b=>b.date===day};
+ bars[81]={...bars[81],o:100,hi:110,lo:90,c:100};
+ const x=h.testOne({ticker:'STRESS',bars},model,.3);const trade=x.out.find(t=>t.signal===day);
+ assert.ok(trade);assert.equal(trade.why,'Stop');assert.ok(trade.exit<trade.entry);assert.ok(trade.returnNet<0);
+});
+test('Opening gap below stop exits at opening price, not imaginary stop fill',()=>{
+ const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:3,stop:1,target:1,go:b=>b.date===day};
+ bars[81]={...bars[81],o:90,hi:93,lo:85,c:90};
+ const x=h.testOne({ticker:'STRESS',bars},model,.3);const trade=x.out.find(t=>t.signal===day);
+ assert.ok(trade);assert.equal(trade.why,'Gap / stop');assert.equal(trade.exit,90);assert.ok(trade.returnNet<-.08);
+});
+test('No completed hold horizon means no included trade',()=>{
+ const h=labAPI(),bars=syntheticBars(),day=bars[108].date,model={key:'STRESS',hold:3,stop:1,target:1,go:b=>b.date===day};
+ const x=h.testOne({ticker:'STRESS',bars},model,.3);
+ assert.equal(x.out.length,0);
+});
+test('Indicator values at signal cannot depend on future candles',()=>{
+ const h=labAPI(),first=syntheticBars(110),second=syntheticBars(110);
+ second[98]={...second[98],o:200,hi:300,lo:100,c:250,v:9900000};
+ const fn=new Function('document',script(lab)+';return indicators;')(fakeDoc());
+ assert.deepEqual(fn(first,80),fn(second,80));
+});
+test('Never claim trading accuracy from a completely flat market',()=>{
+ const h=labAPI(),bars=syntheticBars(300);
+ for(const strategy of h.strategies)assert.equal(h.testOne({ticker:'FLAT',bars},strategy,.3).out.length,0);
+});
+test('Simulated returns include both legs of transaction costs',()=>{
+ const h=labAPI(),bars=syntheticBars(),day=bars[80].date,model={key:'STRESS',hold:2,stop:50,target:50,go:b=>b.date===day};
+ const x=h.testOne({ticker:'STRESS',bars},model,.3);
+ const trade=x.out[0];assert.ok(trade);assert.equal(trade.why,'Durée');
+ assert.ok(Math.abs(trade.returnNet-((1-.0015)/(1+.0015)-1))<1e-10);
+});
