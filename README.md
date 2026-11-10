@@ -6,6 +6,7 @@ Application personnelle gratuite de suivi d'un portefeuille saisi manuellement e
 
 - Tableau de bord : https://pext1331.github.io/Quantswing-ai/
 - Laboratoire des preuves : https://pext1331.github.io/Quantswing-ai/analyse.html
+- Gestion du risque : https://pext1331.github.io/Quantswing-ai/risque.html
 - Générateur CSV Google Colab : https://colab.research.google.com/github/PEXT1331/Quantswing-ai/blob/main/Generateur_CSV_Colab.ipynb
 
 Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, transactions personnelles, montants ou sauvegardes JSON dans le dépôt.
@@ -49,6 +50,28 @@ Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, 
 
 Ces indications techniques ne constituent pas une opinion juridique formelle. En cas de doute sur un fournisseur, utiliser un export CSV légitimement obtenu, sans automatiser l'accès.
 
+
+## Gestion du risque personnel (nouveau)
+
+Page : https://pext1331.github.io/Quantswing-ai/risque.html
+
+**Objectif : savoir combien une position peut raisonnablement coûter et risquer avant un achat, pas augmenter artificiellement le taux de réussite.**
+
+- Interface optimisée pour Safari/iPad, données personnelles masquées dès l'ouverture.
+- Lit localement l'ancien portefeuille avec la même clé de stockage de navigateur (quantswing-ipad-v1). Aucun mot de passe, aucune clé API ni montant transmis ou publié. Une autre installation Safari/écran d'accueil peut utiliser un espace local différent.
+- Stop sous le **Low récent** : creux technique moins 0,25 fois l'ATR (paramètre exploratoire).
+- Stop basé sur la volatilité : prix d'entrée moins 1,5 fois l'ATR. Option conservatrice : le plus éloigné des deux.
+- Résistance déduite du **High récent** quand elle se situe au-dessus du prix d'entrée; sinon objectif hypothétique 2R ou niveau manuel, clairement indiqué. Le ratio gain/risque est calculé après frais.
+- Stop suiveur indicatif : plus haut depuis l'entrée moins 2 ATR; ne pas l'abaisser lorsqu'un stop existant est plus élevé.
+- Calcul de taille maximale en actions entières sous **quatre plafonds simultanés** : budget de risque par transaction (défaut 0,5 % des fonds propres), risque cumulé des positions (défaut 2 %), exposition totale au même titre (défaut 10 %), liquidités disponibles. Un plafond sectoriel facultatif s'ajoute uniquement si l'utilisateur renseigne déjà son exposition sectorielle.
+- Le risque théorique des positions en portefeuille est calculé à partir des derniers cours saisis et des stops locaux. La page **bloque le nouveau plan** si des cours sont trop anciens (plus de sept jours), si un stop manque, si le portefeuille est incomplet, si la conversion USD/CAD manque ou si le rapport gain/risque net est insuffisant.
+- L'utilisateur peut sauvegarder un stop pour une position existante dans le stockage local; ceci **ne place pas un ordre de courtage**. Exporter une sauvegarde JSON privée après changement. La synchronisation entre onglets de la même origine est prise en charge.
+- La page permet un **CSV OHLCV local** (Date, Open, High, Low, Close, Volume; colonne Symbol facultative), y compris un CSV multi-titres. Le calculateur déduit ATR 14, creux sur 10 séances et ancien sommet sur 20/60 séances. Une bougie du jour non terminée est exclue et un fichier dépassé ne peut pas servir à générer un plan admissible.
+- Une démonstration entièrement fictive de 10 000 $ CAD est disponible sans toucher au portefeuille privé.
+- Les niveaux, scores et budgets sont des expériences : une ouverture en gap, un ordre mal exécuté, les commissions véritables, le change, la liquidité, la fiscalité et les événements corporatifs peuvent faire perdre plus que l'estimation. Les liquidités multidevises sont des estimations CAD, pas un solde officiel de courtage.
+- Cette amélioration ne change pas encore le taux de réussite historique des stratégies : les règles de sélection ne sont pas modifiées. Un vrai rendement net positif devra être démontré séparément par validation prospective.
+
+Contrôles automatiques supplémentaires : tests/risk.test.cjs (25 cas comprenant pertes, stocks existants, CAD/USD, CSV, données périmées et traitement de 600 titres fictifs). Les tests ne remplacent pas une validation dans Safari sur l'iPad réel.
 
 ## Radar quotidien automatisé
 
