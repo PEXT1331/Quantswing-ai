@@ -38,6 +38,17 @@ Le code GitHub Pages est public. Ne publie jamais de mots de passe, jetons API, 
 - Un utilisateur ayant accès à ton iPad déverrouillé pourrait voir les données locales. Les sauvegardes JSON ne sont pas chiffrées. Le masquage visuel n'empêche pas l'inspection technique.
 - Un bon backtest ne garantit aucun profit : il faut des tests sur de nouvelles périodes et une simulation prospective avant de risquer de l'argent.
 
+## Cadre juridique et données (vérifié le 10 novembre 2026)
+
+- **Usage personnel uniquement.** Le site présente des calculs pédagogiques pour la recherche personnelle. Il ne commercialise pas de conseil, ne publie aucun signal individualisé à d'autres clients et n'exécute aucun ordre. Si le service est offert au public comme conseil financier ou SaaS, un examen juridique, des licences et potentiellement une inscription auprès de l'AMF seront nécessaires.
+- **GitHub Pages** : permis pour les pages statiques de projets personnels; il ne peut pas être détourné en hébergement gratuit d'un SaaS commercial. Voir https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
+- **TradingView** : liens vers ses graphiques pour consultation visuelle seulement. Les conditions interdisent l'utilisation de ses données dans un modèle de décision algorithmique sans droits supplémentaires. Voir https://www.tradingview.com/policies/
+- **Historique CSV** : n'importer que des données que tu as le droit d'utiliser à des fins personnelles de recherche. Les jeux de données trouvés publiquement n'autorisent pas nécessairement leur redistribution ou leur réutilisation commerciale.
+- **Générateur Colab** : yfinance est une bibliothèque non officielle et Yahoo impose ses propres conditions; un usage personnel de recherche ne donne pas automatiquement le droit d'effectuer des extractions automatisées. N'exécute le générateur que si tu as vérifié que ton accès et l'utilisation prévue sont autorisés. Voir https://ranaroussi.github.io/yfinance/
+- **Audit empirique** : https://pext1331.github.io/Quantswing-ai/audit.html (rapport de résultats dérivés; pas les données historiques originales).
+
+Ces indications techniques ne constituent pas une opinion juridique formelle. En cas de doute sur un fournisseur, utiliser un export CSV légitimement obtenu, sans automatiser l'accès.
+
 ## Maintenance
 
 - index.html : portefeuille et transactions manuelles.
