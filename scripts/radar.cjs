@@ -109,7 +109,7 @@ async function scan({apiKey,now=new Date(),tickers=DEFAULT_WATCHLIST,fetchImpl=f
 function simulatedInput(symbol,days=130){
  const root={},start=Date.UTC(2026,0,1);
  for(let i=0;i<days;i++){
-  const date=new Date(start+i*86400000).toISOString().slice(0,10),price=60+i*.15+Math.sin(i/6)*1.5,volume=i>100?220000:100000;
+  const date=new Date(start+i*86400000).toISOString().slice(0,10),trend=60+i*.15+Math.sin(i/6)*1.5,price=i===days-1?trend*1.09:trend,volume=i===days-1?900000:i>100?220000:100000;
   root[date]={'1. open':String(price-0.2),'2. high':String(price+1.5),'3. low':String(price-1.5),'4. close':String(price),'5. volume':String(volume)};
  }
  return {'Time Series (Daily)':root};
