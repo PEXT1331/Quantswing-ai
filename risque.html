@@ -31,7 +31,7 @@ button{border:1px solid #4b958a;background:#25675e;color:#eaffe9;border-radius:1
 </section>
 <section class="panel"><h2>02 · Construire un plan technique</h2>
 <p class="small muted">Entre des valeurs de chandeliers vérifiées. Le moteur compare un stop sous le dernier creux (*Low*) et un stop calculé avec la volatilité (*ATR*). Le plus haut récent (*High*) sert à repérer une résistance, pas à promettre un objectif.</p>
-<form id="planForm">
+<div class="hint"><strong>Préremplir depuis de vrais chandeliers</strong><p class="small muted">Importe un CSV local (Date, Open, High, Low, Close, Volume), éventuellement avec la colonne Symbol pour plusieurs actions. L'application calcule les niveaux des 61 dernières séances ou plus. Aucun fichier n'est envoyé sur Internet.</p><label for="localCsv">Fichier historique CSV</label><input type="file" id="localCsv" accept=".csv,text/csv"><p id="csvStatus" class="small muted" role="status">Sinon, remplis les chiffres manuellement ci-dessous.</p></div><form id="planForm">
 <div class="grid">
 <div><label for="symbol">Action</label><input id="symbol" maxlength="18" placeholder="SHOP.TO, NVDA…" autocomplete="off" required></div>
 <div><label for="currency">Devise du titre</label><select id="currency"><option value="CAD">CAD</option><option value="USD">USD</option></select></div>
@@ -65,7 +65,7 @@ const $=id=>document.getElementById(id),KEY='quantswing-ipad-v1',F=window.QuantR
 const fmt=v=>Number.isFinite(v)?new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(v):'—';
 const amount=v=>Number.isFinite(v)?new Intl.NumberFormat('fr-CA',{maximumFractionDigits:4}).format(v):'—';
 const num=id=>$(id).value.trim()===''?null:Number($(id).value);
-let demo=false,data=null,state=null;
+let demo=false,data=null,state=null,importedAsOf=null;
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(className)n.className=className;return n}
 function createDemo(){return {version:1,cash:[{side:'deposit',amount:10000}],trades:[],quotes:{},risk:{},fx:null}}
 function readLocal(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):{version:1,cash:[],trades:[],quotes:{},risk:{},fx:null}}catch(e){return null}}
@@ -109,7 +109,7 @@ function calculate(event){event?.preventDefault();const body=$('outputBody');bod
  body.append(box);
  if(tech.trailing!==null)body.append(el('p','Stop suiveur théorique depuis le plus haut atteint : '+amount(tech.trailing)+' '+currency+'. Il ne doit jamais être abaissé pour élargir le risque.','hint'));
  for(const w of tech.warnings)body.append(el('p',w,'warning small'));
- const plan=F.positionPlan(state,{symbol,currency,entry:num('entry'),stop:tech.stop,target:tech.target,riskPct:num('riskPct'),maxTickerPct:num('maxTickerPct'),maxTotalRiskPct:num('maxTotalRiskPct'),feePct:num('feePct'),sectorExposureCAD:num('sectorExposureCAD'),sectorLimitPct:num('sectorLimitPct')});
+ const plan=F.positionPlan(state,{symbol,currency,entry:num('entry'),stop:tech.stop,target:tech.target,riskPct:num('riskPct'),maxTickerPct:num('maxTickerPct'),maxTotalRiskPct:num('maxTotalRiskPct'),feePct:num('feePct'),sectorExposureCAD:num('sectorExposureCAD'),sectorLimitPct:num('sectorLimitPct'),marketAsOf:importedAsOf});
  const verdict=el('div');flag(verdict,plan.eligible?'PLAN CONFORME AUX PLAFONDS DE SIMULATION — pas une recommandation d’achat.':'NE PAS OUVRIR DE POSITION SUR CES DONNÉES — conditions ou limites non satisfaites.',plan.eligible);body.append(verdict);
  if(plan.hardStop){body.append(el('p','Un ou plusieurs renseignements du portefeuille doivent être corrigés avant de calculer une quantité fiable.','muted'))}
  else{
@@ -123,11 +123,30 @@ function calculate(event){event?.preventDefault();const body=$('outputBody');bod
  for(const w of plan.warnings)body.append(el('p',w,'muted small'));
  body.append(el('p','Ces niveaux utilisent uniquement les chiffres que tu as saisis. Ils ne tiennent pas compte des nouvelles futures, de la liquidité réelle, d’un gap à l’ouverture ni des taxes. Aucun taux de réussite futur n’est déduit du plan.','muted small'));
 }
+
+$('localCsv').addEventListener('change',async e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ try{
+  if(file.size>6e6)throw Error('Fichier trop volumineux (limite 6 Mo).');
+  if(demo)refresh(false);
+  const l=F.levelsFromCSV({csv:await file.text(),filename:file.name,ticker:$('symbol').value});
+  importedAsOf=l.date;
+  $('symbol').value=l.symbol;
+  $('currency').value=l.symbol.endsWith('.TO')||l.symbol.endsWith('.TRT')?'CAD':'USD';
+  $('entry').value=l.entry;$('atr').value=l.atr;$('swingLow').value=l.swingLow;
+  $('high20').value=l.resistanceHigh??'';
+  $('targetMode').value=l.resistanceHigh?'resistance':'2r';
+  $('csvStatus').textContent='Données locales : '+l.symbol+' · clôture '+l.date+' · '+l.barCount+' chandeliers · volume relatif '+amount(l.relativeVolume)+'× · ancien sommet 20j '+amount(l.breakoutHigh20)+(l.stale?' · ⚠️ DONNÉES PÉRIMÉES : plan bloqué':' · Source CSV non vérifiée : contrôle les données.');
+  calculate();
+ }catch(err){importedAsOf=null;$('csvStatus').textContent='Impossible d’importer : '+(err.message||'CSV invalide');}
+ finally{e.target.value=''}
+});
+$('planForm').addEventListener('input',e=>{if(importedAsOf&&e.target.id==='symbol'){importedAsOf=null;$('csvStatus').textContent='Symbole modifié : les anciens niveaux ne sont plus associés à ce nouveau titre. Importe son historique ou vérifie les prix manuellement.';}});
 $('unlock').addEventListener('click',()=>{
  const locked=document.body.classList.toggle('locked');$('privateArea').inert=locked;$('unlock').textContent=locked?'Déverrouiller l’affichage':'Masquer les montants';$('unlock').setAttribute('aria-pressed',String(!locked));
 });
-$('demo').addEventListener('click',()=>{refresh(true);$('symbol').value='DEMO';$('currency').value='CAD';$('entry').value='100';$('atr').value='2';$('swingLow').value='94';$('high20').value='112';$('stopMode').value='support';$('targetMode').value='resistance';$('manualTarget').value='';$('highSinceEntry').value='';calculate()});
-$('reload').addEventListener('click',()=>refresh(false));
+$('demo').addEventListener('click',()=>{importedAsOf=null;$('csvStatus').textContent='Démo entièrement fictive : aucune donnée boursière réelle.';refresh(true);$('symbol').value='DEMO';$('currency').value='CAD';$('entry').value='100';$('atr').value='2';$('swingLow').value='94';$('high20').value='112';$('stopMode').value='support';$('targetMode').value='resistance';$('manualTarget').value='';$('highSinceEntry').value='';calculate()});
+$('reload').addEventListener('click',()=>{importedAsOf=null;$('csvStatus').textContent='Renseigne des données manuelles ou importe un nouveau CSV.';refresh(false)});
 $('planForm').addEventListener('submit',calculate);
 window.addEventListener('storage',e=>{if(e.key===KEY&&!demo)refresh(false)});
 refresh(false);
