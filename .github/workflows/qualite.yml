@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: '22'
       - name: Tests automatiques sans dependances
-        run: node --test tests/quant.test.cjs tests/risk.test.cjs tests/radar.test.cjs
+        run: node --test tests/quant.test.cjs tests/risk.test.cjs tests/radar.test.cjs tests/gold.test.cjs
