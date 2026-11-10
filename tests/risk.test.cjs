@@ -130,3 +130,40 @@ test('Stress test: 600 positions fictives vérifiées sans lecture réseau',()=>
  assert.equal(s.valid,true);assert.equal(s.positions.length,600);assert.equal(s.cash,4000);assert.equal(s.equity,10600);assert.equal(s.openRisk,1200);
  assert.equal(s.exposure,sum);
 });
+
+test('CSV multi-titres : chandelles calculées localement sur le bon symbole',()=>{
+ const now=new Date('2026-05-11T15:00:00Z'),rows=['Symbol,Date,Open,High,Low,Close,Volume'];
+ for(let i=0;i<131;i++){
+  const date=new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10);
+  for(const [symbol,price] of [['NVDA',100],['SHOP.TO',60]])
+   rows.push([symbol,date,price,price+3,price-2,price+i*.01,100000+i*500].join(','));
+ }
+ const csv=rows.join('\n');
+ const result=risk.levelsFromCSV({csv,ticker:'SHOP.TO',filename:'multi.csv',now});
+ assert.equal(result.symbol,'SHOP.TO');assert.equal(result.barCount,130);
+ assert.equal(result.date,'2026-05-10');assert.equal(result.stale,false);
+ assert.equal(result.swingLow,58);assert.equal(result.atr,5);
+ assert.ok(result.relativeVolume>1);
+ const noSelection=risk.levelsFromCSV({csv,filename:'multi.csv',now});
+ assert.equal(noSelection.symbol,'NVDA');
+});
+test('Une chandelle du jour encore ouverte est ignorée à l’import',()=>{
+ const now=new Date('2026-05-11T15:00:00Z'),rows=['Date,Open,High,Low,Close,Volume'];
+ for(let i=0;i<131;i++){
+  const date=new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10);
+  rows.push([date,100,103,98,i===130?999:101,200000].join(','));
+ }
+ const x=risk.levelsFromCSV({csv:rows.join('\n'),filename:'AAPL.csv',now});
+ assert.equal(x.date,'2026-05-10');assert.ok(x.entry<200);
+});
+test('Un ancien historique bloque le plan d’achat même si le score paraît élevé',()=>{
+ const s=risk.snapshot(demo(),now);
+ const stale=risk.positionPlan(s,input({marketAsOf:'2026-10-01'}),now);
+ assert.equal(stale.eligible,false);assert.ok(stale.reasons.some(x=>/périmés/.test(x)));
+ const current=risk.positionPlan(s,input({marketAsOf:'2026-11-10'}),now);
+ assert.equal(current.eligible,true);
+});
+test('Un fichier sans OHLCV valide ne produit aucun niveau trompeur',()=>{
+ const bad='Date,Open,High,Low,Close,Volume\n2026-01-01,100,90,110,100,1000';
+ assert.throws(()=>risk.levelsFromCSV({csv:bad,filename:'TEST.csv',now}),/30 chandeliers/);
+});
