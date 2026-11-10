@@ -45,7 +45,7 @@ canvas{display:block;width:100%;height:280px;background:#0b192a;border:1px solid
 <p class="small muted">Si le stop et la cible sont touchés le même jour, le stop est exécuté en premier. En cas d'ouverture sous le stop, la sortie est simulée à l'ouverture, pas au prix souhaité du stop. Les opérations sont sans chevauchement par stratégie; les 200 premières séances servent au calcul des indicateurs.</p>
 </section>
 <section id="result" class="panel hidden">
-<div class="row"><h2>03 · Résultats sur données jamais utilisées pour régler ces règles</h2><button type="button" id="exportReport" class="secondary">Exporter le résumé (.json)</button></div>
+<div class="row"><h2>03 · Résultats chronologiques — validation exploratoire</h2><button type="button" id="exportReport" class="secondary">Exporter le résumé (.json)</button></div>
 <div id="quality" class="warning" role="status"></div>
 <div class="grid metrics">
  <div class="metric"><span>Instrument déclaré</span><strong id="ticker">—</strong></div>
@@ -103,6 +103,7 @@ function render(){
  if(!dataset.hasVolume)warnings.push('Aucun volume disponible; les deux règles testées n’utilisent pas le volume.');
  if(dataset.jumps)warnings.push(dataset.jumps+' grands écarts (>40 %) observés : vérifier la continuité/ajustement de la série.');
  if(dataset.invalid||dataset.duplicates)warnings.push(dataset.invalid+' lignes rejetées et '+dataset.duplicates+' dates dupliquées.');
+ if(dataset.partial)warnings.push(dataset.partial+' bougie(s) future(s) ou incomplète(s) exclue(s) avant analyse.');
  if(age>7)warnings.push('Données périmées de '+age+' jours : aucun signal d’achat actuel ne peut en être tiré.');
  if(age<0)warnings.push('Dernière date dans le futur : vérifie les dates avant toute conclusion.');
  $('result').classList.remove('hidden');setNotice('quality',warnings.join(' • '));
